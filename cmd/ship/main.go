@@ -47,6 +47,7 @@ func init() {
 	rootCmd.AddCommand(sslCmd)
 	rootCmd.AddCommand(pgCmd)
 	rootCmd.AddCommand(scaleCmd)
+	rootCmd.AddCommand(releasesCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(deployCmd)

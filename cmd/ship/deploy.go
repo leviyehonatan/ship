@@ -6,6 +6,7 @@ import (
 
 	"github.com/leviyehonatan/ship/internal/config"
 	deploy "github.com/leviyehonatan/ship/internal/docker"
+	"github.com/leviyehonatan/ship/internal/releases"
 	"github.com/leviyehonatan/ship/internal/secrets"
 	"github.com/leviyehonatan/ship/internal/snapshot"
 	"github.com/leviyehonatan/ship/internal/ssl"
@@ -128,6 +129,9 @@ Reads ship.toml for configuration and .env for secrets.`,
 				fmt.Fprintf(cmd.OutOrStdout(), "  https://%s (Let's Encrypt — may take a moment)\n", domain)
 			}
 		}
+
+		// Record release
+		releases.Record(sshClient, cfg.App, cfg.App+":latest")
 
 		status, _ := deployer.Status()
 		fmt.Fprintf(cmd.OutOrStdout(), "\n  App:  %s\n", cfg.App)
