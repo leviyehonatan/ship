@@ -1,0 +1,26 @@
+[
+  {
+    "id": 159919881,
+    "name": "test-server",
+    "status": "running",
+    "created": "2026-07-23T05:20:50Z",
+    "server_type": { "name": "cx23" },
+    "location": { "name": "nbg1" },
+    "public_net": {
+      "ipv4": { "ip": "46.224.91.70" },
+      "ipv6": { "ip": "2a01:4f8:1c18:6e96::1" }
+    }
+  },
+  {
+    "id": 123456,
+    "name": "staging",
+    "status": "off",
+    "created": "2026-06-01T00:00:00Z",
+    "server_type": { "name": "cx33" },
+    "location": { "name": "fsn1" },
+    "public_net": {
+      "ipv4": { "ip": "1.2.3.4" },
+      "ipv6": { "ip": "::1" }
+    }
+  }
+]

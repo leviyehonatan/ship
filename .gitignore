@@ -1,0 +1,5 @@
+/ship
+*.test
+ship.toml
+.env.encrypted
+.env/ship-e2e

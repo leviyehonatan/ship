@@ -1,0 +1,23 @@
+FROM ubuntu:24.04
+
+# SSH + basic tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server curl gnupg ca-certificates sudo && \
+    mkdir /var/run/sshd && \
+    echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
+    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "root:root" | chpasswd && \
+    ssh-keygen -A
+
+# Docker CLI (talks to host daemon via mounted socket)
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && apt-get install -y --no-install-recommends docker-ce-cli
+
+# Postgres + CouchDB + Redis for snapshot/rollback
+RUN apt-get install -y --no-install-recommends postgresql redis-server && \
+    apt-get clean
+
+EXPOSE 22 5432 5984 6379 8080
+
+CMD ["/usr/sbin/sshd", "-D", "-e"]
