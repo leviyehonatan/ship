@@ -59,14 +59,6 @@ func List(client *shipssh.Client, appName string) ([]Release, error) {
 	return readAll(client, appName), nil
 }
 
-func Latest(client *shipssh.Client, appName string) (*Release, error) {
-	all := readAll(client, appName)
-	if len(all) == 0 {
-		return nil, fmt.Errorf("no releases for %s", appName)
-	}
-	return &all[len(all)-1], nil
-}
-
 func readAll(client *shipssh.Client, appName string) []Release {
 	out, err := client.Run(fmt.Sprintf("cat %s/%s.json 2>/dev/null", releasesPath, appName))
 	if err != nil || out == "" {

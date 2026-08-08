@@ -2,7 +2,6 @@ package state
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,19 +72,4 @@ func Current() string {
 		return ""
 	}
 	return strings.TrimSpace(string(data))
-}
-
-func ResolveServer(shipTOMLServer string) (string, error) {
-	// 1. ship.toml server field (already resolved to IP by caller)
-	if shipTOMLServer != "" {
-		return shipTOMLServer, nil
-	}
-	// 2. Global current-server
-	if current := Current(); current != "" {
-		s, err := LoadServer(current)
-		if err == nil && s.IP != "" {
-			return s.IP, nil
-		}
-	}
-	return "", fmt.Errorf("no server set — use 'ship server use <name>' or set 'server' in ship.toml")
 }

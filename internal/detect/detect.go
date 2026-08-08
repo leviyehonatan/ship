@@ -175,10 +175,6 @@ func DetectSystem(p SystemProvider) ProviderInfo {
 	return info
 }
 
-func DetectPlatform(p PlatformProvider) bool {
-	return DetectPlatformAt(p, "")
-}
-
 func DetectPlatformAt(p PlatformProvider, dir string) bool {
 	if dir == "" {
 		dir, _ = os.Getwd()

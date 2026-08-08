@@ -4,40 +4,23 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/leviyehonatan/ship/internal/releases"
-	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 	"github.com/spf13/cobra"
 )
 
 var releasesCmd = &cobra.Command{
 	Use:   "releases",
 	Short: "Show deployment history",
-	Long:  `Lists all deployments with version, timestamp, and image reference.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(config.DefaultPath())
-		if err != nil {
-			return fmt.Errorf("loading ship.toml: %w", err)
-		}
-		if cfg.Server == "" {
-			return fmt.Errorf("server not set")
-		}
-
-		ip, err := resolveServer("hetzner", cfg.Server)
+		ctx, err := newShipCtx(cmd)
 		if err != nil {
 			return err
 		}
 
-		sshClient, err := shipssh.NewClientInsecure(ip, "root", "")
+		rel, err := releases.List(ctx.SSH, ctx.Config.App)
 		if err != nil {
 			return err
 		}
-
-		rel, err := releases.List(sshClient, cfg.App)
-		if err != nil {
-			return err
-		}
-
 		if len(rel) == 0 {
 			fmt.Fprintln(cmd.OutOrStdout(), "No releases yet. Run 'ship deploy' first.")
 			return nil

@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 
-	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/leviyehonatan/ship/internal/ssl"
-	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 	"github.com/spf13/cobra"
 )
 
@@ -20,31 +17,16 @@ var sslOnCmd = &cobra.Command{
 	Short: "Enable HTTPS for a domain",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(config.DefaultPath())
+		ctx, err := newShipCtx(cmd)
 		if err != nil {
 			return err
 		}
-		if cfg.Server == "" {
-			return fmt.Errorf("server not set in ship.toml")
-		}
-
-		ip, err := resolveServer("hetzner", cfg.Server)
-		if err != nil {
-			return err
-		}
-
-		sshClient, err := shipssh.NewClientInsecure(ip, "root", "")
-		if err != nil {
-			return err
-		}
-
-		port := cfg.Deploy.Port
+		port := ctx.Config.Deploy.Port
 		if port == 0 {
 			port = 8080
 		}
-
 		fmt.Fprintf(cmd.OutOrStdout(), "Enabling HTTPS for %s...\n", args[0])
-		if err := ssl.Configure(sshClient, args[0], port); err != nil {
+		if err := ssl.Configure(ctx.SSH, args[0], port); err != nil {
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ https://%s → localhost:%d\n", args[0], port)
@@ -57,55 +39,23 @@ var sslOffCmd = &cobra.Command{
 	Short: "Disable HTTPS for a domain",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(config.DefaultPath())
+		ctx, err := newShipCtx(cmd)
 		if err != nil {
 			return err
 		}
-		if cfg.Server == "" {
-			return fmt.Errorf("server not set")
-		}
-
-		ip, err := resolveServer("hetzner", cfg.Server)
-		if err != nil {
-			return err
-		}
-
-		sshClient, err := shipssh.NewClientInsecure(ip, "root", "")
-		if err != nil {
-			return err
-		}
-
-		if err := ssl.Remove(sshClient, args[0]); err != nil {
-			return err
-		}
-		fmt.Fprintf(cmd.OutOrStdout(), "✓ HTTPS disabled for %s\n", args[0])
-		return nil
+		return ssl.Remove(ctx.SSH, args[0])
 	},
 }
 
 var sslStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show SSL certificate status for all domains",
+	Short: "Show SSL certificate status",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(config.DefaultPath())
+		ctx, err := newShipCtx(cmd)
 		if err != nil {
 			return err
 		}
-		if cfg.Server == "" {
-			return fmt.Errorf("server not set")
-		}
-
-		ip, err := resolveServer("hetzner", cfg.Server)
-		if err != nil {
-			return err
-		}
-
-		sshClient, err := shipssh.NewClientInsecure(ip, "root", "")
-		if err != nil {
-			return err
-		}
-
-		out, err := ssl.Status(sshClient)
+		out, err := ssl.Status(ctx.SSH)
 		if err != nil {
 			return err
 		}
@@ -118,33 +68,14 @@ var sslRenewCmd = &cobra.Command{
 	Use:   "renew",
 	Short: "Force certificate renewal",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(config.DefaultPath())
+		ctx, err := newShipCtx(cmd)
 		if err != nil {
 			return err
 		}
-		if cfg.Server == "" {
-			return fmt.Errorf("server not set")
-		}
-
-		ip, err := resolveServer("hetzner", cfg.Server)
-		if err != nil {
-			return err
-		}
-
-		sshClient, err := shipssh.NewClientInsecure(ip, "root", "")
-		if err != nil {
-			return err
-		}
-
-		sshClient.Run("caddy reload --force --config /etc/caddy/Caddyfile 2>/dev/null || true")
-		fmt.Fprintln(cmd.OutOrStdout(), "✓ Certificate renewal requested")
-		fmt.Fprintln(cmd.OutOrStdout(), "  Caddy will auto-renew 30 days before expiry")
+		ctx.Run("caddy reload --force --config /etc/caddy/Caddyfile 2>/dev/null || true")
+		fmt.Fprintln(cmd.OutOrStdout(), "✓ Renewal requested")
 		return nil
 	},
-}
-
-func init() {
-	_ = strconv.Itoa(0) // keep import
 }
 
 func initSSL() {

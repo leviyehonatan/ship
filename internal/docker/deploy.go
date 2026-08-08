@@ -2,13 +2,10 @@ package deploy
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"sort"
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/ssh"
@@ -175,13 +172,4 @@ func ParseEnvFile(path string) (EnvFile, error) {
 		}
 	}
 	return env, nil
-}
-
-func BuildArgsChecksum(args []string) string {
-	sorted := make([]string, len(args))
-	copy(sorted, args)
-	sort.Strings(sorted)
-	h := sha256.New()
-	h.Write([]byte(strings.Join(sorted, "\n")))
-	return hex.EncodeToString(h.Sum(nil))[:16]
 }

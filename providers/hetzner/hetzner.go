@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/leviyehonatan/ship/internal/provider"
 )
@@ -329,26 +328,6 @@ type hcloudSSHKey struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
 	PublicKey string `json:"public_key"`
-}
-
-// stripANSI removes terminal color codes from hcloud output
-func stripANSI(s string) string {
-	var result strings.Builder
-	inEscape := false
-	for _, r := range s {
-		if r == '\x1b' {
-			inEscape = true
-			continue
-		}
-		if inEscape {
-			if r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' {
-				inEscape = false
-			}
-			continue
-		}
-		result.WriteRune(r)
-	}
-	return result.String()
 }
 
 func isEULocation(loc string) bool {
