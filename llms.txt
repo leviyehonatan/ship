@@ -14,7 +14,7 @@ Deploy containers to your own VPS. Build, push, run — one command.
 ## Repo
 
 - https://github.com/leviyehonatan/ship
-- Install: go install github.com/leviyehonatan/ship@v0.2.0
+- Install: go install github.com/leviyehonatan/ship/cmd/ship@v0.2.0
 
 ## Optional
 
