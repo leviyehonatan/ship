@@ -5,6 +5,7 @@ import (
 
 	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/leviyehonatan/ship/internal/pg"
+	"github.com/leviyehonatan/ship/internal/secrets"
 	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 	"github.com/spf13/cobra"
 )
@@ -62,8 +63,18 @@ var pgCreateCmd = &cobra.Command{
 		fmt.Fprintf(cmd.OutOrStdout(), "  Host:     %s\n", ip)
 		fmt.Fprintf(cmd.OutOrStdout(), "  Port:     5432\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "  URL:      %s\n", connStr)
-		fmt.Fprintf(cmd.OutOrStdout(), "\n  Save as secret:\n")
-		fmt.Fprintf(cmd.OutOrStdout(), "    ship secrets set DATABASE_URL=%s\n", connStr)
+
+		// Auto-link: set DATABASE_URL as a secret automatically
+		linkApp, _ := cmd.Flags().GetString("link")
+		if linkApp == "" {
+			linkApp = cfg.App
+		}
+		if linkApp != "" && linkApp != "app" {
+			secrets.Set(".env.encrypted", "DATABASE_URL", connStr)
+			fmt.Fprintf(cmd.OutOrStdout(), "  Linked:   %s (DATABASE_URL set automatically)\n", linkApp)
+		} else {
+			fmt.Fprintf(cmd.OutOrStdout(), "  Set manually: ship secrets set DATABASE_URL=%s\n", connStr)
+		}
 		fmt.Fprintf(cmd.OutOrStdout(), "  Connect locally:\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "    ship tunnel db\n")
 		return nil
@@ -139,6 +150,7 @@ var pgConnectCmd = &cobra.Command{
 func initPG() {
 	pgCreateCmd.Flags().String("server", "", "Server name or IP")
 	pgCreateCmd.Flags().String("password", "", "Postgres password (auto-generated if empty)")
+	pgCreateCmd.Flags().String("link", "", "App to link (auto-sets DATABASE_URL)")
 
 	pgCmd.AddCommand(pgCreateCmd)
 	pgCmd.AddCommand(pgListCmd)
