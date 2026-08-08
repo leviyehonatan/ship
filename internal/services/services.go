@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -55,6 +57,26 @@ func Ensure(client *shipssh.Client, cfg *config.ShipConfig, appName string, isLo
 			runArgs += fmt.Sprintf(" -e %s=%s", k, v)
 		}
 
+		// Auto-generate password for Postgres if not set
+		if strings.Contains(svc.Image, "postgres") {
+			pass := svc.Env["POSTGRES_PASSWORD"]
+			if pass == "" {
+				pass = randomPassword()
+				runArgs += fmt.Sprintf(" -e POSTGRES_PASSWORD=%s", pass)
+			}
+			db := svc.Env["POSTGRES_DB"]
+			if db == "" {
+				db = appName
+			}
+			env["DATABASE_URL"] = fmt.Sprintf("postgresql://postgres:%s@%s:%d/%s", pass, name, svc.Port, db)
+		}
+
+		// Auto-generate REDIS_URL
+		if strings.Contains(svc.Image, "redis") {
+			redisURL := fmt.Sprintf("redis://%s:%d", name, svc.Port)
+			env["REDIS_URL"] = redisURL
+		}
+
 		client.Run(fmt.Sprintf("docker run %s %s", runArgs, svc.Image))
 
 		// Connection strings use service name (bridge network DNS), not 127.0.0.1
@@ -84,4 +106,10 @@ func Status(client *shipssh.Client, appName, serviceName string) (string, error)
 		return "", err
 	}
 	return strings.TrimSpace(out), nil
+}
+
+func randomPassword() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)[:16]
 }
