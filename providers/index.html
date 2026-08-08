@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://leviyehonatan.github.io/ship/secrets/">
+        <link rel="canonical" href="https://leviyehonatan.github.io/ship/providers/">
       
       
-        <link rel="prev" href="../commands/">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../deploy/">
+        <link rel="next" href="../commands/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secrets & Keys - ship</title>
+        <title>Providers - ship</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secrets-key-management" class="md-skip">
+        <a href="#providers" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secrets & Keys
+              Providers
             
           </span>
         </div>
@@ -297,10 +297,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../providers/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -316,6 +343,125 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetzner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetzner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#digitalocean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DigitalOcean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vultr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vultr
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aws" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GCP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local (Docker)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -351,37 +497,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Secrets & Keys
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../secrets/" class="md-nav__link">
         
   
   
@@ -397,125 +516,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#how-secrets-work" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How secrets work
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#syncing-across-devices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syncing across devices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ci-headless" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI / headless
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#setting-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Setting secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#viewing-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Viewing secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#removing-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Removing secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#importing-from-env" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Importing from .env
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -628,10 +628,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-secrets-work" class="md-nav__link">
+  <a href="#supported-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How secrets work
+        Supported providers
       
     </span>
   </a>
@@ -639,10 +639,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-storage" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key storage
+        How it works
       
     </span>
   </a>
@@ -650,10 +650,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#syncing-across-devices" class="md-nav__link">
+  <a href="#hetzner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Syncing across devices
+        Hetzner
       
     </span>
   </a>
@@ -661,10 +661,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ci-headless" class="md-nav__link">
+  <a href="#linode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI / headless
+        Linode
       
     </span>
   </a>
@@ -672,10 +672,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#setting-secrets" class="md-nav__link">
+  <a href="#digitalocean" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setting secrets
+        DigitalOcean
       
     </span>
   </a>
@@ -683,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#viewing-secrets" class="md-nav__link">
+  <a href="#vultr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Viewing secrets
+        Vultr
       
     </span>
   </a>
@@ -694,10 +694,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#removing-secrets" class="md-nav__link">
+  <a href="#aws" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Removing secrets
+        AWS
       
     </span>
   </a>
@@ -705,10 +705,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#importing-from-env" class="md-nav__link">
+  <a href="#gcp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Importing from .env
+        GCP
       
     </span>
   </a>
@@ -716,10 +716,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#local-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security
+        Local (Docker)
       
     </span>
   </a>
@@ -746,61 +746,117 @@
   
 
 
-<h1 id="secrets-key-management">Secrets &amp; Key Management<a class="headerlink" href="#secrets-key-management" title="Permanent link">&para;</a></h1>
-<h2 id="how-secrets-work">How secrets work<a class="headerlink" href="#how-secrets-work" title="Permanent link">&para;</a></h2>
-<p>Secrets are encrypted with <a href="https://age-encryption.org"><code>age</code></a> and stored in <code>.env.encrypted</code>. This file is safe to commit to git. At deploy time, ship decrypts in memory and injects secrets into the container.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>.env.encrypted              ← encrypted (commit-safe)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ship deploy                 ← decrypts in memory → docker run -e
+<h1 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">&para;</a></h1>
+<p>Ship works with any VPS provider that has a CLI. You install and authenticate the provider's CLI once — ship discovers it automatically and shells out to it.</p>
+<h2 id="supported-providers">Supported providers<a class="headerlink" href="#supported-providers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>CLI</th>
+<th>Install</th>
+<th>Config path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hetzner</td>
+<td><code>hcloud</code></td>
+<td><code>brew install hcloud</code></td>
+<td><code>~/.config/hcloud/cli.toml</code></td>
+</tr>
+<tr>
+<td>Linode</td>
+<td><code>linode-cli</code></td>
+<td><code>brew install linode-cli</code></td>
+<td><code>~/.config/linode-cli</code></td>
+</tr>
+<tr>
+<td>DigitalOcean</td>
+<td><code>doctl</code></td>
+<td><code>brew install doctl</code></td>
+<td><code>~/.config/doctl/config.yaml</code></td>
+</tr>
+<tr>
+<td>Vultr</td>
+<td><code>vultr-cli</code></td>
+<td><code>brew install vultr-cli</code></td>
+<td><code>~/.vultr-cli.yaml</code></td>
+</tr>
+<tr>
+<td>AWS</td>
+<td><code>aws</code></td>
+<td><code>brew install awscli</code></td>
+<td><code>~/.aws/config</code></td>
+</tr>
+<tr>
+<td>GCP</td>
+<td><code>gcloud</code></td>
+<td><code>brew install google-cloud-sdk</code></td>
+<td><code>~/.config/gcloud/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Check which providers are ready:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ship<span class="w"> </span>whoami
 </code></pre></div>
-<p>Plaintext <code>.env</code> is never written to disk during deploy.</p>
-<h2 id="key-storage">Key storage<a class="headerlink" href="#key-storage" title="Permanent link">&para;</a></h2>
-<p>The age private key unlocks <code>.env.encrypted</code>. You choose where it lives:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship<span class="w"> </span>keys<span class="w"> </span>generate<span class="w"> </span>keychain<span class="w">   </span><span class="c1"># macOS Keychain (iCloud sync)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ship<span class="w"> </span>keys<span class="w"> </span>generate<span class="w"> </span>file<span class="w">        </span><span class="c1"># ~/.config/ship/age-key.txt</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ship<span class="w"> </span>keys<span class="w"> </span>generate<span class="w"> </span>env<span class="w">         </span><span class="c1"># SHIP_AGE_KEY env var</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ship<span class="w"> </span>keys<span class="w"> </span>status<span class="w">               </span><span class="c1"># check where your key is</span>
+<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p>Ship never stores API keys. It reads the provider's own config files and shells out to their CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship servers create my-app --provider hetzner
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  → hcloud server create --name my-app --type cx23 --output json
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  → parses JSON
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  → returns IP, ID, region
 </code></pre></div>
-<p>Resolution order: <code>SHIP_AGE_KEY</code> → Keychain → File.</p>
-<h2 id="syncing-across-devices">Syncing across devices<a class="headerlink" href="#syncing-across-devices" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>macOS Keychain:</strong> auto-syncs via iCloud. Same Apple ID → key appears.</li>
-<li><strong>File:</strong> copy <code>~/.config/ship/age-key.txt</code> manually.</li>
-<li><strong>1Password / external:</strong> <code>ship secrets export-key | pbcopy</code>, paste into 1Password. On new device: <code>ship secrets import-key</code>.</li>
-</ul>
-<h2 id="ci-headless">CI / headless<a class="headerlink" href="#ci-headless" title="Permanent link">&para;</a></h2>
-<p>Set <code>SHIP_AGE_KEY</code> as a CI secret:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">SHIP_AGE_KEY</span><span class="o">=</span><span class="s2">&quot;AGE-SECRET-KEY-1...&quot;</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ship<span class="w"> </span>deploy
+<p>Adding a new provider means implementing 15 methods that map CLI output JSON to Ship's data structures — no SDKs, no API key management.</p>
+<h2 id="hetzner">Hetzner<a class="headerlink" href="#hetzner" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>brew<span class="w"> </span>install<span class="w"> </span>hcloud
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>hcloud<span class="w"> </span>context<span class="w"> </span>create<span class="w"> </span>my-project
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># paste API token from https://console.hetzner.cloud → Security → API Tokens</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>hetzner<span class="w"> </span>--size<span class="w"> </span>cx23<span class="w"> </span>--region<span class="w"> </span>nbg1
 </code></pre></div>
-<h2 id="setting-secrets">Setting secrets<a class="headerlink" href="#setting-secrets" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://...
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">COUCHDB_PASSWORD</span><span class="o">=</span>hunter2
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">STRIPE_KEY</span><span class="o">=</span>sk_live_abc123
+<h2 id="linode">Linode<a class="headerlink" href="#linode" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>brew<span class="w"> </span>install<span class="w"> </span>linode-cli
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>linode-cli<span class="w"> </span>configure
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># paste API token from https://cloud.linode.com/profile/tokens</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>linode<span class="w"> </span>--size<span class="w"> </span>g6-nanode-1<span class="w"> </span>--region<span class="w"> </span>us-east
 </code></pre></div>
-<h2 id="viewing-secrets">Viewing secrets<a class="headerlink" href="#viewing-secrets" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ship<span class="w"> </span>secrets<span class="w"> </span>list<span class="w">              </span><span class="c1"># keys only, values hidden</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ship<span class="w"> </span>secrets<span class="w"> </span>show<span class="w"> </span>KEY<span class="w">          </span><span class="c1"># single value</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ship<span class="w"> </span>secrets<span class="w"> </span>show<span class="w">              </span><span class="c1"># all values</span>
+<h2 id="digitalocean">DigitalOcean<a class="headerlink" href="#digitalocean" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>brew<span class="w"> </span>install<span class="w"> </span>doctl
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>doctl<span class="w"> </span>auth<span class="w"> </span>init
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># paste API token from https://cloud.digitalocean.com/account/api/tokens</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>digitalocean<span class="w"> </span>--size<span class="w"> </span>s-1vcpu-1gb<span class="w"> </span>--region<span class="w"> </span>nyc1
 </code></pre></div>
-<h2 id="removing-secrets">Removing secrets<a class="headerlink" href="#removing-secrets" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">unset</span><span class="w"> </span>KEY
+<h2 id="vultr">Vultr<a class="headerlink" href="#vultr" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>brew<span class="w"> </span>install<span class="w"> </span>vultr-cli
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VULTR_API_KEY</span><span class="o">=</span>&lt;key<span class="w"> </span>from<span class="w"> </span>https://my.vultr.com/settings/#settingsapi&gt;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>vultr<span class="w"> </span>--size<span class="w"> </span>vc2-1c-1gb<span class="w"> </span>--region<span class="w"> </span>ewr
 </code></pre></div>
-<h2 id="importing-from-env">Importing from .env<a class="headerlink" href="#importing-from-env" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>cat<span class="w"> </span>.env
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nv">DATABASE_URL</span><span class="o">=</span>...
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nv">COUCHDB_PASSWORD</span><span class="o">=</span>...
+<h2 id="aws">AWS<a class="headerlink" href="#aws" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>brew<span class="w"> </span>install<span class="w"> </span>awscli
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>aws<span class="w"> </span>configure
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># AWS Access Key ID + Secret Access Key from IAM</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>ship<span class="w"> </span>secrets<span class="w"> </span>import<span class="w"> </span>.env<span class="w">       </span><span class="c1"># encrypts → .env.encrypted</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Delete .env — it&#39;s now in .env.encrypted</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>aws<span class="w"> </span>--size<span class="w"> </span>t3.micro<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--image<span class="w"> </span>ami-0c7217cdde317cfec
 </code></pre></div>
-<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>.env.encrypted</code> in git → safe (encrypted)</li>
-<li><code>.env</code> in git → dangerous (plaintext, add to .gitignore)</li>
-<li><code>~/.config/ship/age-key.txt</code> → chmod 600, protected by FileVault</li>
-<li>macOS Keychain → encrypted by login password, iCloud sync is end-to-end</li>
-<li><code>SHIP_AGE_KEY</code> → in memory only (don't put in .zshrc)</li>
-</ul>
+<h2 id="gcp">GCP<a class="headerlink" href="#gcp" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>brew<span class="w"> </span>install<span class="w"> </span>google-cloud-sdk
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>gcloud<span class="w"> </span>auth<span class="w"> </span>login
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>gcloud<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>project<span class="w"> </span>my-project-id
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>ship<span class="w"> </span>servers<span class="w"> </span>create<span class="w"> </span>my-app<span class="w"> </span>--provider<span class="w"> </span>gcp<span class="w"> </span>--size<span class="w"> </span>e2-micro<span class="w"> </span>--region<span class="w"> </span>us-central1-a<span class="w"> </span>--image-family<span class="w"> </span>ubuntu-2404-lts
+</code></pre></div>
+<h2 id="local-docker">Local (Docker)<a class="headerlink" href="#local-docker" title="Permanent link">&para;</a></h2>
+<p>For testing without any cloud provider:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>start<span class="w">          </span><span class="c1"># starts a local SSH container</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ship<span class="w"> </span>use<span class="w"> </span><span class="nb">local</span><span class="w">            </span><span class="c1"># target the container</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>ship<span class="w"> </span>deploy<span class="w">               </span><span class="c1"># builds against local Docker</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>stop<span class="w">           </span><span class="c1"># tear down</span>
+</code></pre></div>
+<p>No provider CLI needed. Uses Docker on your machine.</p>
 
 
 
