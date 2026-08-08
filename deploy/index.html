@@ -699,8 +699,9 @@
 <li><strong>Releases</strong> — records deploy timestamp + image reference</li>
 </ol>
 <h2 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">&para;</a></h2>
-<p>One-time per server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship<span class="w"> </span>setup<span class="w"> </span>--server<span class="w"> </span>&lt;ip&gt;
+<p>Server setup runs automatically on first deploy. A marker file at <code>/opt/ship/.setup-complete</code> tracks whether it's done.</p>
+<p>To run manually:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship<span class="w"> </span>setup<span class="w"> </span>--server<span class="w"> </span>&lt;ip&gt;<span class="w">    </span><span class="c1"># or ship setup (uses current server)</span>
 </code></pre></div>
 <p>Installs:
 - Docker + Docker Compose
