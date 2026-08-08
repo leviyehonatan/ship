@@ -30,6 +30,7 @@ func init() {
 	initSecrets()
 	initSSL()
 	initPG()
+	initScale()
 
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(serversCmd)
@@ -45,6 +46,7 @@ func init() {
 	rootCmd.AddCommand(secretsCmd)
 	rootCmd.AddCommand(sslCmd)
 	rootCmd.AddCommand(pgCmd)
+	rootCmd.AddCommand(scaleCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(deployCmd)

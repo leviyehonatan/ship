@@ -233,6 +233,7 @@ func (p *Provider) ListImages(ctx context.Context) ([]provider.Image, error) {
 }
 
 func (p *Provider) CreateSSHKey(ctx context.Context, name string, publicKey []byte) (*provider.SSHKey, error) {
+	// hcloud ssh-key create --name <name> --public-key "<key>" --output json
 	cmd := exec.CommandContext(ctx, "hcloud", "ssh-key", "create",
 		"--name", name,
 		"--public-key", string(publicKey),
@@ -251,6 +252,23 @@ func (p *Provider) CreateSSHKey(ctx context.Context, name string, publicKey []by
 		Name:      key.Name,
 		PublicKey: key.PublicKey,
 	}, nil
+}
+
+func (p *Provider) ResizeServer(ctx context.Context, serverID string, newSize string) error {
+	cmd := exec.CommandContext(ctx, "hcloud", "server", "change-type", serverID, "--type", newSize)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("resize: %w\n%s", err, out)
+	}
+	return nil
+}
+
+func (p *Provider) ShutdownServer(ctx context.Context, serverID string) error {
+	return exec.CommandContext(ctx, "hcloud", "server", "poweroff", serverID).Run()
+}
+
+func (p *Provider) PowerOnServer(ctx context.Context, serverID string) error {
+	return exec.CommandContext(ctx, "hcloud", "server", "poweron", serverID).Run()
 }
 
 // JSON response types matching hcloud --output json

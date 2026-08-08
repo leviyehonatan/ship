@@ -25,6 +25,11 @@ type Provider interface {
 
 	// SSH keys
 	CreateSSHKey(ctx context.Context, name string, publicKey []byte) (*SSHKey, error)
+
+	// Scaling
+	ResizeServer(ctx context.Context, serverID string, newSize string) error
+	ShutdownServer(ctx context.Context, serverID string) error
+	PowerOnServer(ctx context.Context, serverID string) error
 }
 
 type CreateServerOpts struct {
