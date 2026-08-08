@@ -71,7 +71,18 @@ CMD ["/usr/sbin/sshd", "-D", "-e"]
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ Local server running (%s)\n", containerID[:12])
 		// Inject host SSH key for passwordless access
 		home, _ := os.UserHomeDir()
-		if pubKey, err := os.ReadFile(home + "/.ssh/id_rsa.pub"); err == nil {
+		keyPath := home + "/.ssh/id_rsa"
+		pubKeyPath := keyPath + ".pub"
+
+		// Generate SSH key if none exists
+		if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+			fmt.Fprintln(cmd.OutOrStdout(), "  No SSH key found — generating ship-specific key...")
+			os.MkdirAll(home+"/.ssh", 0700)
+			exec.Command("ssh-keygen", "-t", "ed25519", "-f", keyPath,
+				"-N", "", "-C", "ship-local").Run()
+		}
+
+		if pubKey, err := os.ReadFile(pubKeyPath); err == nil {
 			fmt.Fprintln(cmd.OutOrStdout(), "  Injecting SSH key...")
 			exec.Command("docker", "exec", "ship-local", "mkdir", "-p", "/root/.ssh").Run()
 			exec.Command("docker", "exec", "ship-local", "sh", "-c",
