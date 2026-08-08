@@ -254,10 +254,26 @@ func initFromFly(cmd *cobra.Command) error {
 		cfg.App = filepath.Base(cwd)
 	}
 
-	// Dockerfile
+	// Dockerfile — resolve relative paths from fly.toml location
 	cfg.Build.Dockerfile = fly.Build.Dockerfile
 	if cfg.Build.Dockerfile == "" {
 		cfg.Build.Dockerfile = "Dockerfile"
+	}
+	if strings.HasPrefix(cfg.Build.Dockerfile, "../") {
+		resolved, err := filepath.Abs(filepath.Join(filepath.Dir("fly.toml"), cfg.Build.Dockerfile))
+		if err == nil && fileExists(resolved) {
+			cfg.Build.Dockerfile = filepath.Base(resolved)
+			fmt.Fprintf(cmd.OutOrStdout(), "  Resolved Dockerfile: %s\n", cfg.Build.Dockerfile)
+		} else {
+			// Fallback: check common locations
+			for _, f := range []string{"Dockerfile", "dockerfile", "Dockerfile.prod"} {
+				if fileExists(f) {
+					cfg.Build.Dockerfile = f
+					fmt.Fprintf(cmd.OutOrStdout(), "  Dockerfile not found at %q — using ./%s\n", fly.Build.Dockerfile, f)
+					break
+				}
+			}
+		}
 	}
 
 	// Build args
@@ -349,4 +365,9 @@ health_check = "%s"
 	fmt.Fprintln(cmd.OutOrStdout(), "    3. Migrate data: ship migrate fly --to <server-ip>")
 	fmt.Fprintln(cmd.OutOrStdout(), "    4. Deploy: ship deploy")
 	return nil
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
