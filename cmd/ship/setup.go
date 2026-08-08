@@ -18,7 +18,7 @@ var setupCmd = &cobra.Command{
 - Sets up a ship app directory
 
 Use --server to specify a server name or IP. Names are resolved via
-the provider (e.g. --server tunity looks up "tunity" in hcloud).`,
+the provider (e.g. --server my-server looks up "my-server" in hcloud).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load(config.DefaultPath())
 		appName := "app"

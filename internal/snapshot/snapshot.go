@@ -33,7 +33,7 @@ func (m *Manager) Create() error {
 
 	// Dump Postgres
 	pgCmd := fmt.Sprintf(
-		"docker exec %s pg_dump -U hono -h 127.0.0.1 tunity > %s/pg_dump.sql",
+		"docker exec %s pg_dump -U root -h 127.0.0.1 app > %s/pg_dump.sql",
 		m.appName, dir,
 	)
 	if _, err := m.client.Run(pgCmd); err != nil {
@@ -98,7 +98,7 @@ func (m *Manager) Restore(snapshotID string) error {
 
 	// Restore Postgres
 	restorePG := fmt.Sprintf(
-		"docker start %s && sleep 3 && cat %s/pg_dump.sql | docker exec -i %s psql -U hono -h 127.0.0.1 tunity",
+		"docker start %s && sleep 3 && cat %s/pg_dump.sql | docker exec -i %s psql -U root -h 127.0.0.1 app",
 		m.appName, dir, m.appName,
 	)
 	if _, err := m.client.Run(restorePG); err != nil {

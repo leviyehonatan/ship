@@ -15,16 +15,20 @@ var migrateCmd = &cobra.Command{
 var migrateFromFlyCmd = &cobra.Command{
 	Use:   "fly [--to ip]",
 	Short: "Migrate a Fly.io app to your server",
-	Long: `Dumps databases and volumes from a running Fly machine,
-copies them to your server, and generates a ship.toml.
+	Long: `Full migration from Fly.io:
+  1. Dumps Postgres + CouchDB from the Fly machine
+  2. Copies all env vars
+  3. Generates ship.toml from fly.toml
+  4. Encrypts secrets with age (safe to commit)
+  5. Sets up Docker + Caddy on target
+  6. Restores databases on target
 
 Requires flyctl to be installed and authenticated.
-
-Run this from your project directory (where fly.toml lives).`,
+Run this from your Fly project directory (where fly.toml lives).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		targetIP, _ := cmd.Flags().GetString("to")
 		if targetIP == "" {
-			return fmt.Errorf("--to <server-ip> is required — where should the data go?")
+			return fmt.Errorf("--to <server-ip> is required")
 		}
 
 		return migrate.FromFly(targetIP)
