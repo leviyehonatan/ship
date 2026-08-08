@@ -69,6 +69,14 @@ CMD ["/usr/sbin/sshd", "-D", "-e"]
 		containerID := strings.TrimSpace(string(out))
 
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ Local server running (%s)\n", containerID[:12])
+		// Inject host SSH key for passwordless access
+		home, _ := os.UserHomeDir()
+		if pubKey, err := os.ReadFile(home + "/.ssh/id_rsa.pub"); err == nil {
+			fmt.Fprintln(cmd.OutOrStdout(), "  Injecting SSH key...")
+			exec.Command("docker", "exec", "ship-local", "mkdir", "-p", "/root/.ssh").Run()
+			exec.Command("docker", "exec", "ship-local", "sh", "-c",
+				"echo '"+strings.TrimSpace(string(pubKey))+"' >> /root/.ssh/authorized_keys").Run()
+		}
 		fmt.Fprintf(cmd.OutOrStdout(), "  ship use local\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "  ship setup\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "  ship deploy\n")

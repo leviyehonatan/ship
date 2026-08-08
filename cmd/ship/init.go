@@ -313,10 +313,16 @@ func initFromFly(cmd *cobra.Command) error {
 	// Generate ship.toml
 	data2 := fmt.Sprintf(`# ship.toml — migrated from fly.toml
 app = "%s"
+`, cfg.App)
 
+	if cfg.Server != "" {
+		data2 += fmt.Sprintf("server = %q\n", cfg.Server)
+	}
+
+	data2 += fmt.Sprintf(`
 [build]
 dockerfile = "%s"
-`, cfg.App, cfg.Build.Dockerfile)
+`, cfg.Build.Dockerfile)
 
 	if len(cfg.Build.Args) > 0 {
 		data2 += "args = ["
