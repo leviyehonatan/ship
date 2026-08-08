@@ -11,7 +11,7 @@ ship deploy                          # build → push → run → SSL
 ## Install
 
 ```bash
-go install github.com/leviyehonatan/ship@v0.1.0
+go install github.com/leviyehonatan/ship@v0.2.0
 ```
 
 ## Quick example
