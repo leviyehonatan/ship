@@ -11,6 +11,7 @@ import (
 	deploy "github.com/leviyehonatan/ship/internal/docker"
 	"github.com/leviyehonatan/ship/internal/releases"
 	"github.com/leviyehonatan/ship/internal/secrets"
+	"github.com/leviyehonatan/ship/internal/services"
 	"github.com/leviyehonatan/ship/internal/snapshot"
 	"github.com/leviyehonatan/ship/internal/ssl"
 	shipssh "github.com/leviyehonatan/ship/internal/ssh"
@@ -91,6 +92,22 @@ Reads ship.toml for configuration and .env for secrets.`,
 		fmt.Fprintln(cmd.OutOrStdout(), "Snapshotting...")
 		if err := mgr.Create(); err != nil {
 			fmt.Fprintf(cmd.OutOrStdout(), "  Warning: snapshot failed: %v\n", err)
+		}
+
+		// Provision services (Postgres, Redis, etc. from ship.toml [services])
+		if len(cfg.Services) > 0 {
+			fmt.Fprintln(cmd.OutOrStdout(), "Provisioning services...")
+			isLocal := strings.HasPrefix(ip, "localhost") || strings.HasPrefix(ip, "127.")
+			svcEnv, err := services.Ensure(sshClient, cfg, cfg.App, isLocal)
+			if err != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "  Warning: %v\n", err)
+			}
+			for k, v := range svcEnv {
+				if _, exists := envVars[k]; !exists {
+					envVars[k] = v
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "  ✓ %s\n", k)
+			}
 		}
 
 		// Build (with build args from ship.toml if present)

@@ -9,13 +9,14 @@ import (
 )
 
 type ShipConfig struct {
-	App     string            `toml:"app"`
-	Server  string            `toml:"server"`
-	Build   Build             `toml:"build"`
-	Deploy  Deploy            `toml:"deploy"`
-	Env     map[string]string `toml:"env,omitempty"`
-	Volumes []Volume          `toml:"volumes"`
-	EnvFile string            `toml:"env_file,omitempty"`
+	App      string             `toml:"app"`
+	Server   string             `toml:"server"`
+	Build    Build              `toml:"build"`
+	Deploy   Deploy             `toml:"deploy"`
+	Env      map[string]string  `toml:"env,omitempty"`
+	Services map[string]Service `toml:"services,omitempty"`
+	Volumes  []Volume           `toml:"volumes"`
+	EnvFile  string             `toml:"env_file,omitempty"`
 }
 
 type Build struct {
@@ -33,6 +34,13 @@ type Deploy struct {
 type Volume struct {
 	Path string `toml:"path"`
 	Size string `toml:"size"`
+}
+
+type Service struct {
+	Image  string `toml:"image"`
+	Port   int    `toml:"port"`
+	Volume string `toml:"volume,omitempty"`
+	Env    map[string]string `toml:"env,omitempty"`
 }
 
 func Load(path string) (*ShipConfig, error) {

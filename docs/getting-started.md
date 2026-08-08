@@ -8,21 +8,18 @@
 
 ## The mental model
 
-Ship works like a managed platform, but on your own servers:
+Ship identifies deployments by `app` name in ship.toml. This name is unique on a server — all containers, volumes, snapshots, and releases are namespaced by it.
 
 ```
-ship servers create         →  provisions a VPS
-ship use <name>             →  sets it as your default target
-ship init                   →  creates ship.toml in your project
-ship deploy                 →  builds, pushes, runs, SSLs
-
-┌─────────────┐     ┌──────────────────┐
-│ your laptop │────▶│ your VPS          │
-│ ship deploy │     │ Docker + Caddy    │
-└─────────────┘     │ your app :8080    │
-                    │ Postgres :5432    │
-                    └──────────────────┘
+              ┌──────────┐
+ Laptop A ───▶│          │
+              │  tunity  │  ← app = "tunity" is the deployment identity
+ Laptop B ───▶│  :8080   │
+              │          │
+     CI  ───▶ └──────────┘
 ```
+
+Multiple machines can deploy the same app — ship.toml is the source of truth. The CLI is stateless; what matters is the `app` name and the `server` it targets.
 
 ## Step-by-step
 
