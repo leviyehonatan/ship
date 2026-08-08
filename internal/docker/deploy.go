@@ -113,8 +113,9 @@ func (d *Deployer) RunRemote(opts RunOpts) error {
 	}
 
 	runCmd := fmt.Sprintf(
-		"docker stop %s 2>/dev/null; docker rm %s 2>/dev/null; docker run -d --name %s --restart unless-stopped %s %s %s %s:latest",
+		"docker stop %s 2>/dev/null; docker rm %s 2>/dev/null; docker run -d --name %s --restart unless-stopped %s %s %s %s %s:latest",
 		d.tag, d.tag, d.tag,
+		opts.NetworkArgs,
 		strings.Join(envArgs, " "),
 		strings.Join(volumeArgs, " "),
 		strings.Join(portArgs, " "),
@@ -149,8 +150,9 @@ func (d *Deployer) Status() (string, error) {
 }
 
 type RunOpts struct {
-	Ports   []string
-	Volumes []string
+	Ports       []string
+	Volumes     []string
+	NetworkArgs string
 }
 
 type EnvFile map[string]string

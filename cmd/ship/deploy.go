@@ -133,9 +133,6 @@ Reads ship.toml for configuration and .env for secrets.`,
 		fmt.Fprintln(cmd.OutOrStdout(), "Starting container...")
 		ports := []string{fmt.Sprintf("%d:%d", cfg.Deploy.Port, cfg.Deploy.Port)}
 		var volumes []string
-		// On macOS Docker Desktop, arbitrary paths like /opt/ship/data are blocked.
-		// Use a project-relative path instead — docker build context includes it,
-		// and it's automatically excluded via .gitignore.
 		isLocal := strings.HasPrefix(ip, "localhost") || strings.HasPrefix(ip, "127.")
 		for _, v := range cfg.Volumes {
 			if isLocal {
@@ -147,17 +144,24 @@ Reads ship.toml for configuration and .env for secrets.`,
 				volumes = append(volumes, fmt.Sprintf("/opt/ship/data/%s:%s", cfg.App, v.Path))
 			}
 		}
-		if len(cfg.Volumes) == 0 {
+		if len(cfg.Volumes) == 0 && len(cfg.Services) == 0 {
 			fmt.Fprintln(cmd.OutOrStdout(), "  ⚠ No volumes configured — container state will be lost on redeploy")
 		}
 		if isLocal {
-			// Ensure .ship-data is gitignored
 			addToGitignore(".ship-data/")
 		}
 
+		// Attach app to bridge network if services are defined
+		networkArgs := ""
+		if len(cfg.Services) > 0 {
+			networkName := fmt.Sprintf("ship-net-%s", cfg.App)
+			networkArgs = fmt.Sprintf("--network %s", networkName)
+		}
+
 		if err := deployer.RunRemote(deploy.RunOpts{
-			Ports:   ports,
-			Volumes: volumes,
+			Ports:       ports,
+			Volumes:     volumes,
+			NetworkArgs: networkArgs,
 		}); err != nil {
 			return fmt.Errorf("run: %w", err)
 		}
