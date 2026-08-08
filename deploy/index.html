@@ -496,6 +496,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rollback" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -650,6 +661,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rollback" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -699,9 +721,8 @@
 <li><strong>Releases</strong> — records deploy timestamp + image reference</li>
 </ol>
 <h2 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">&para;</a></h2>
-<p>Server setup runs automatically on first deploy. A marker file at <code>/opt/ship/.setup-complete</code> tracks whether it's done.</p>
-<p>To run manually:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship<span class="w"> </span>setup<span class="w"> </span>--server<span class="w"> </span>&lt;ip&gt;<span class="w">    </span><span class="c1"># or ship setup (uses current server)</span>
+<p>Server setup runs automatically on first deploy (<code>/opt/ship/.setup-complete</code> marker). To run manually:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ship<span class="w"> </span>setup<span class="w"> </span>--server<span class="w"> </span>&lt;ip&gt;
 </code></pre></div>
 <p>Installs:
 - Docker + Docker Compose
@@ -720,10 +741,20 @@
 </code></pre></div>
 <p>Caddy auto-fetches Let's Encrypt certificates and auto-renews 30 days before expiry. Set <code>domains</code> in ship.toml <code>[deploy]</code> to auto-configure on deploy.</p>
 <p>Multiple apps on same server: each gets its own Caddy block. Ship never overwrites existing configurations.</p>
+<h2 id="volumes">Volumes<a class="headerlink" href="#volumes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[[volumes]]</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10GB&quot;</span>
+</code></pre></div>
+<ul>
+<li><strong>Production:</strong> mounts at <code>/opt/ship/data/&lt;app&gt;/&lt;path&gt;</code></li>
+<li><strong>Local:</strong> mounts at <code>.ship-data/&lt;app&gt;/&lt;path&gt;</code> (gitignored, Docker Desktop compatible)</li>
+<li><strong>No volumes:</strong> container state lost on redeploy (warning shown)</li>
+</ul>
 <h2 id="rollback">Rollback<a class="headerlink" href="#rollback" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ship<span class="w"> </span>rollback<span class="w">              </span><span class="c1"># restore latest snapshot</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ship<span class="w"> </span>rollback<span class="w"> </span><span class="m">20260809</span><span class="w">     </span><span class="c1"># restore specific snapshot</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ship<span class="w"> </span>snapshots<span class="w">             </span><span class="c1"># list available</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span>rollback<span class="w">              </span><span class="c1"># restore latest snapshot</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ship<span class="w"> </span>rollback<span class="w"> </span><span class="m">20260809</span><span class="w">     </span><span class="c1"># restore specific snapshot</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ship<span class="w"> </span>snapshots<span class="w">             </span><span class="c1"># list available</span>
 </code></pre></div>
 <p>Snapshots cover Postgres + CouchDB + Redis. Created automatically before each deploy.</p>
 

@@ -851,12 +851,15 @@
 </code></pre></div>
 <h2 id="local-docker">Local (Docker)<a class="headerlink" href="#local-docker" title="Permanent link">&para;</a></h2>
 <p>For testing without any cloud provider:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>start<span class="w">          </span><span class="c1"># starts a local SSH container</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>start<span class="w">          </span><span class="c1"># starts a local SSH container (your key auto-injected)</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ship<span class="w"> </span>use<span class="w"> </span><span class="nb">local</span><span class="w">            </span><span class="c1"># target the container</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>ship<span class="w"> </span>deploy<span class="w">               </span><span class="c1"># builds against local Docker</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>stop<span class="w">           </span><span class="c1"># tear down</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Volumes locally use .ship-data/ (gitignored, Docker Desktop compatible)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># In production, volumes use /opt/ship/data/ on the server</span>
 </code></pre></div>
-<p>No provider CLI needed. Uses Docker on your machine.</p>
+<p>No provider CLI needed. SSH key from <code>~/.ssh/id_rsa.pub</code> auto-injected.</p>
 
 
 
