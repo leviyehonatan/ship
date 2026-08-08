@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/leviyehonatan/ship/internal/secrets"
 	"github.com/spf13/cobra"
 )
@@ -140,4 +144,45 @@ func initSecrets() {
 	secretsCmd.AddCommand(secretsListCmd)
 	secretsCmd.AddCommand(secretsImportCmd)
 	secretsCmd.AddCommand(secretsShowCmd)
+	secretsCmd.AddCommand(keysExportCmd)
+	secretsCmd.AddCommand(keysImportCmd)
+}
+
+var keysExportCmd = &cobra.Command{
+	Use:   "export-key",
+	Short: "Print the age private key (for syncing across devices)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		_, err := secrets.EnsureKeys()
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(filepath.Join(config.StateDir(), "age-key.txt"))
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+		return nil
+	},
+}
+
+var keysImportCmd = &cobra.Command{
+	Use:   "import-key",
+	Short: "Import an age private key (paste from another device)",
+	Long:  "Reads an age private key from stdin and stores it.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		data, err := io.ReadAll(cmd.InOrStdin())
+		if err != nil {
+			return err
+		}
+		key := strings.TrimSpace(string(data))
+		if key == "" || !strings.HasPrefix(key, "AGE-SECRET-KEY-") {
+			return fmt.Errorf("invalid age key — should start with AGE-SECRET-KEY-")
+		}
+		os.MkdirAll(config.StateDir(), 0700)
+		if err := os.WriteFile(filepath.Join(config.StateDir(), "age-key.txt"), []byte(key), 0600); err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), "✓ Key imported. Test with: ship secrets list")
+		return nil
+	},
 }

@@ -10,38 +10,93 @@ import (
 
 	"filippo.io/age"
 	"github.com/leviyehonatan/ship/internal/config"
+	"github.com/zalando/go-keyring"
+)
+
+const keyringService = "ship-age-key"
+
+// KeyNotFound is returned when no age key exists. The CLI should prompt the user.
+var KeyNotFound = fmt.Errorf("no age key found — run 'ship keys generate'")
+
+// KeyStore tracks where the key was found.
+type KeyStore string
+
+const (
+	KeyStoreEnv      KeyStore = "env"
+	KeyStoreKeychain KeyStore = "keychain"
+	KeyStoreFile     KeyStore = "file"
 )
 
 func privateKeyPath() string {
 	return filepath.Join(config.StateDir(), "age-key.txt")
 }
 
-func EnsureKeys() (*age.X25519Identity, error) {
-	if _, err := os.Stat(privateKeyPath()); err == nil {
-		data, err := os.ReadFile(privateKeyPath())
-		if err != nil {
-			return nil, err
-		}
-		ids, err := age.ParseIdentities(strings.NewReader(strings.TrimSpace(string(data))))
-		if err != nil || len(ids) == 0 {
-			return nil, fmt.Errorf("parsing key: %w", err)
-		}
-		xid, ok := ids[0].(*age.X25519Identity)
-		if !ok {
-			return nil, fmt.Errorf("unexpected key type")
-		}
-		return xid, nil
+// DetectKeyStore returns where the key is stored, or KeyNotFound.
+func DetectKeyStore() (KeyStore, error) {
+	if os.Getenv("SHIP_AGE_KEY") != "" {
+		return KeyStoreEnv, nil
 	}
+	if key, err := keyring.Get(keyringService, "private"); err == nil && key != "" {
+		return KeyStoreKeychain, nil
+	}
+	if _, err := os.Stat(privateKeyPath()); err == nil {
+		return KeyStoreFile, nil
+	}
+	return "", KeyNotFound
+}
 
+// Generate creates a new keypair and stores it in the given store.
+func Generate(store KeyStore) (*age.X25519Identity, error) {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
-		return nil, fmt.Errorf("generating key: %w", err)
+		return nil, fmt.Errorf("generating age key: %w", err)
 	}
 
-	os.MkdirAll(config.StateDir(), 0700)
-	os.WriteFile(privateKeyPath(), []byte(id.String()), 0600)
+	switch store {
+	case KeyStoreFile:
+		os.MkdirAll(config.StateDir(), 0700)
+		os.WriteFile(privateKeyPath(), []byte(id.String()), 0600)
+	case KeyStoreKeychain:
+		keyring.Set(keyringService, "private", id.String())
+	case KeyStoreEnv:
+		// Don't store — user sets SHIP_AGE_KEY themselves
+	default:
+		return nil, fmt.Errorf("unknown key store: %s", store)
+	}
 
 	return id, nil
+}
+
+func EnsureKeys() (*age.X25519Identity, error) {
+	// 1. Env var
+	if envKey := os.Getenv("SHIP_AGE_KEY"); envKey != "" {
+		return parseIdentity(envKey)
+	}
+	// 2. Keychain
+	if key, err := keyring.Get(keyringService, "private"); err == nil && key != "" {
+		if id, err := parseIdentity(key); err == nil {
+			return id, nil
+		}
+	}
+	// 3. File
+	if data, err := os.ReadFile(privateKeyPath()); err == nil {
+		if id, err := parseIdentity(strings.TrimSpace(string(data))); err == nil {
+			return id, nil
+		}
+	}
+	return nil, KeyNotFound
+}
+
+func parseIdentity(key string) (*age.X25519Identity, error) {
+	ids, err := age.ParseIdentities(strings.NewReader(strings.TrimSpace(key)))
+	if err != nil || len(ids) == 0 {
+		return nil, fmt.Errorf("invalid age key")
+	}
+	xid, ok := ids[0].(*age.X25519Identity)
+	if !ok {
+		return nil, fmt.Errorf("unexpected key type")
+	}
+	return xid, nil
 }
 
 // --- direct operations on .env.encrypted ---

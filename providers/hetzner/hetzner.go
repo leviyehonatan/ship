@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/leviyehonatan/ship/internal/provider"
 )
@@ -233,6 +232,7 @@ func (p *Provider) ListImages(ctx context.Context) ([]provider.Image, error) {
 }
 
 func (p *Provider) CreateSSHKey(ctx context.Context, name string, publicKey []byte) (*provider.SSHKey, error) {
+	// hcloud ssh-key create --name <name> --public-key "<key>" --output json
 	cmd := exec.CommandContext(ctx, "hcloud", "ssh-key", "create",
 		"--name", name,
 		"--public-key", string(publicKey),
@@ -251,6 +251,23 @@ func (p *Provider) CreateSSHKey(ctx context.Context, name string, publicKey []by
 		Name:      key.Name,
 		PublicKey: key.PublicKey,
 	}, nil
+}
+
+func (p *Provider) ResizeServer(ctx context.Context, serverID string, newSize string) error {
+	cmd := exec.CommandContext(ctx, "hcloud", "server", "change-type", serverID, "--type", newSize)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("resize: %w\n%s", err, out)
+	}
+	return nil
+}
+
+func (p *Provider) ShutdownServer(ctx context.Context, serverID string) error {
+	return exec.CommandContext(ctx, "hcloud", "server", "poweroff", serverID).Run()
+}
+
+func (p *Provider) PowerOnServer(ctx context.Context, serverID string) error {
+	return exec.CommandContext(ctx, "hcloud", "server", "poweron", serverID).Run()
 }
 
 // JSON response types matching hcloud --output json
@@ -311,26 +328,6 @@ type hcloudSSHKey struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
 	PublicKey string `json:"public_key"`
-}
-
-// stripANSI removes terminal color codes from hcloud output
-func stripANSI(s string) string {
-	var result strings.Builder
-	inEscape := false
-	for _, r := range s {
-		if r == '\x1b' {
-			inEscape = true
-			continue
-		}
-		if inEscape {
-			if r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' {
-				inEscape = false
-			}
-			continue
-		}
-		result.WriteRune(r)
-	}
-	return result.String()
 }
 
 func isEULocation(loc string) bool {

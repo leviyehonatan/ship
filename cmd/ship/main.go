@@ -23,25 +23,42 @@ like Hetzner, Linode, DigitalOcean, and Vultr.
 
 Just like fly deploy, but on your own servers.`,
 	SilenceUsage: true,
+	Version:      "v0.2.0",
 }
 
 func init() {
 	initMigrate()
 	initSecrets()
+	initKeys()
 	initSSL()
+	initPG()
+	initScale()
+	initLocal()
 
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(serversCmd)
 	rootCmd.AddCommand(serverCreateCmd)
 	rootCmd.AddCommand(serverListCmd)
 	rootCmd.AddCommand(serverDeleteCmd)
+	rootCmd.AddCommand(serverUseCmd)
 	rootCmd.AddCommand(discoverCmd)
 	rootCmd.AddCommand(migrateCmd)
 	rootCmd.AddCommand(snapshotCmd)
 	rootCmd.AddCommand(snapshotsCmd)
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(secretsCmd)
+	rootCmd.AddCommand(keysCmd)
 	rootCmd.AddCommand(sslCmd)
+	rootCmd.AddCommand(pgCmd)
+	rootCmd.AddCommand(scaleCmd)
+	rootCmd.AddCommand(releasesCmd)
+	rootCmd.AddCommand(imageCmd)
+	rootCmd.AddCommand(servicesCmd)
+	rootCmd.AddCommand(consoleCmd)
+	rootCmd.AddCommand(doctorCmd)
+	rootCmd.AddCommand(dashboardCmd)
+	rootCmd.AddCommand(sftpCmd)
+	rootCmd.AddCommand(localCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(deployCmd)

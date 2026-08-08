@@ -8,13 +8,65 @@ import (
 
 	"github.com/leviyehonatan/ship/internal/detect"
 	"github.com/leviyehonatan/ship/internal/provider"
+	"github.com/leviyehonatan/ship/internal/state"
+	"github.com/leviyehonatan/ship/providers/aws"
+	"github.com/leviyehonatan/ship/providers/digitalocean"
+	"github.com/leviyehonatan/ship/providers/gcp"
 	"github.com/leviyehonatan/ship/providers/hetzner"
+	"github.com/leviyehonatan/ship/providers/linode"
+	"github.com/leviyehonatan/ship/providers/vultr"
 	"github.com/spf13/cobra"
 )
 
 var serversCmd = &cobra.Command{
 	Use:   "servers",
 	Short: "Manage your VPS servers",
+}
+
+var serverUseCmd = &cobra.Command{
+	Use:   "use [name]",
+	Short: "Set the default server",
+	Long: `Without arguments, shows available servers from all configured providers.
+With a name, sets it as the default target for all commands.`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			// Show available servers
+			fmt.Fprintln(cmd.OutOrStdout(), "Available servers:")
+			for _, sp := range detect.SystemProviders {
+				p, _ := mustProvider(sp.Name)
+				if p == nil {
+					continue
+				}
+				servers, err := p.ListServers(context.Background())
+				if err != nil || len(servers) == 0 {
+					continue
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "  %s:\n", sp.Name)
+				for _, s := range servers {
+					marker := ""
+					if state.Current() == s.Name {
+						marker = " ← current"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "    %-20s  %-8s  %-15s  %s%s\n",
+						s.Name, s.Size, s.PublicIPv4, s.Status, marker)
+				}
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "\n  Set default: ship use <name>\n")
+			return nil
+		}
+
+		if err := state.SetCurrent(args[0]); err != nil {
+			return err
+		}
+		s, err := state.LoadServer(args[0])
+		if err != nil {
+			fmt.Fprintf(cmd.OutOrStdout(), "✓ Default server: %s\n", args[0])
+			return nil
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "✓ Default server: %s (%s, %s)\n", s.Name, s.IP, s.Size)
+		return nil
+	},
 }
 
 var serverCreateCmd = &cobra.Command{
@@ -32,6 +84,19 @@ var serverCreateCmd = &cobra.Command{
 		image, _ := cmd.Flags().GetString("image")
 		keyPath, _ := cmd.Flags().GetString("key")
 		providerName, _ := cmd.Flags().GetString("provider")
+		if providerName == "" || providerName == "hetzner" {
+			// Auto-detect first available provider
+			for _, sp := range detect.SystemProviders {
+				if detect.DetectSystem(sp).Status == detect.StatusReady {
+					providerName = sp.Name
+					break
+				}
+			}
+			if providerName == "" {
+				return fmt.Errorf("no provider configured — install one: brew install hcloud")
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Using provider: %s\n", providerName)
+		}
 
 		if keyPath == "" {
 			home, _ := os.UserHomeDir()
@@ -73,6 +138,18 @@ var serverCreateCmd = &cobra.Command{
 		fmt.Fprintf(cmd.OutOrStdout(), "  Region:   %s\n", server.Region)
 		fmt.Fprintf(cmd.OutOrStdout(), "  Size:     %s\n", server.Size)
 		fmt.Fprintf(cmd.OutOrStdout(), "  SSH key:  %s\n", sshKey.Name)
+
+		// Save to state
+		state.SaveServer(state.Server{
+			Name:     server.Name,
+			ID:       server.ID,
+			IP:       server.PublicIPv4,
+			Provider: providerName,
+			Size:     server.Size,
+			Region:   server.Region,
+		})
+		state.SetCurrent(server.Name)
+		fmt.Fprintf(cmd.OutOrStdout(), "\n  Set as current server. Use 'ship server use <name>' to switch.\n")
 		return nil
 	},
 }
@@ -175,7 +252,32 @@ func mustProvider(name string) (provider.Provider, error) {
 			return nil, err
 		}
 		return hetzner.New(), nil
+	case "linode":
+		if err := detect.MustAuth(detect.SystemProviders[1]); err != nil {
+			return nil, err
+		}
+		return linode.New(), nil
+	case "digitalocean":
+		if err := detect.MustAuth(detect.SystemProviders[2]); err != nil {
+			return nil, err
+		}
+		return digitalocean.New(), nil
+	case "vultr":
+		if err := detect.MustAuth(detect.SystemProviders[3]); err != nil {
+			return nil, err
+		}
+		return vultr.New(), nil
+	case "aws":
+		if err := detect.MustAuth(detect.SystemProviders[4]); err != nil {
+			return nil, err
+		}
+		return aws.New(), nil
+	case "gcp":
+		if err := detect.MustAuth(detect.SystemProviders[5]); err != nil {
+			return nil, err
+		}
+		return gcp.New(), nil
 	default:
-		return nil, fmt.Errorf("unknown provider %q — supported: hetzner", name)
+		return nil, fmt.Errorf("unknown provider %q — supported: hetzner, linode, digitalocean, vultr", name)
 	}
 }

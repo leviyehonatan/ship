@@ -6,88 +6,98 @@ import (
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/detect"
+	"github.com/leviyehonatan/ship/internal/provider"
+	"github.com/leviyehonatan/ship/internal/state"
 	"github.com/spf13/cobra"
 )
 
 var discoverCmd = &cobra.Command{
 	Use:   "discover [provider]",
-	Short: "Show existing infrastructure on a provider",
-	Long: `Discovers your existing servers, volumes, and SSH keys.
-If provider is omitted, auto-detects the first configured one.`,
+	Short: "Show existing infrastructure",
+	Long: `Lists servers from all configured providers.
+Specify a provider name to filter to just one.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		providerName := "hetzner"
+		// Filter to a specific provider if requested
 		if len(args) > 0 {
-			providerName = args[0]
-		}
-
-		// Find the provider definition for auth check
-		var sp *detect.SystemProvider
-		for i := range detect.SystemProviders {
-			if detect.SystemProviders[i].Name == providerName {
-				sp = &detect.SystemProviders[i]
-				break
+			sp := detect.FindProvider(args[0])
+			if sp == nil {
+				return fmt.Errorf("unknown provider %q", args[0])
 			}
-		}
-		if sp == nil {
-			return fmt.Errorf("unknown provider %q", providerName)
-		}
-
-		if err := detect.MustAuth(*sp); err != nil {
-			return err
-		}
-
-		p, err := mustProvider(providerName)
-		if err != nil {
-			return err
-		}
-
-		ctx := context.Background()
-
-		// Servers
-		servers, err := p.ListServers(ctx)
-		if err != nil {
-			return fmt.Errorf("listing servers: %w", err)
-		}
-
-		fmt.Fprintln(cmd.OutOrStdout(), "SERVERS:")
-		if len(servers) == 0 {
-			fmt.Fprintln(cmd.OutOrStdout(), "  (none)")
-			fmt.Fprintf(cmd.OutOrStdout(), "\n  Create one: ship servers create my-server\n")
-			return nil
-		}
-
-		fmt.Fprintf(cmd.OutOrStdout(), "  %-12s  %-20s  %-10s  %-8s  %-15s  %s\n",
-			"ID", "NAME", "STATUS", "SIZE", "IP", "REGION")
-		for _, s := range servers {
-			shortID := s.ID
-			if len(shortID) > 10 {
-				shortID = shortID[:10]
+			if err := detect.MustAuth(*sp); err != nil {
+				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "  %-12s  %-20s  %-10s  %-8s  %-15s  %s\n",
-				shortID, s.Name, s.Status, s.Size, s.PublicIPv4, s.Region)
+			p, err := mustProvider(sp.Name)
+			if err != nil {
+				return err
+			}
+			return printServers(cmd, p, sp.Name)
 		}
 
-		// Suggest setup
-		if len(servers) == 1 {
-			s := servers[0]
-			fmt.Fprintf(cmd.OutOrStdout(), "\n  Use this server?\n")
-			fmt.Fprintf(cmd.OutOrStdout(), "    ship setup --server %s    # install Docker + Caddy\n", s.PublicIPv4)
-			fmt.Fprintf(cmd.OutOrStdout(), "    ship deploy               # build and deploy\n")
-		} else {
-			fmt.Fprintf(cmd.OutOrStdout(), "\n  Pick a server by name or IP:\n")
-			fmt.Fprintf(cmd.OutOrStdout(), "    ship setup --server <name-or-ip>\n")
-			fmt.Fprintf(cmd.OutOrStdout(), "    ship deploy\n")
+		// Show all configured providers
+		anyFound := false
+		for _, sp := range detect.SystemProviders {
+			if detect.DetectSystem(sp).Status != detect.StatusReady &&
+				detect.DetectSystem(sp).Status != detect.StatusWarning {
+				continue
+			}
+			p, err := mustProvider(sp.Name)
+			if err != nil {
+				continue
+			}
+			anyFound = true
+			printServers(cmd, p, sp.Name)
 		}
-
+		if !anyFound {
+			fmt.Fprintln(cmd.OutOrStdout(), "No servers found on any provider.")
+			fmt.Fprintln(cmd.OutOrStdout(), "  Install a provider CLI: brew install hcloud")
+		}
 		return nil
 	},
+}
+
+func printServers(cmd *cobra.Command, p provider.Provider, providerName string) error {
+	servers, err := p.ListServers(context.Background())
+	if err != nil {
+		return fmt.Errorf("listing %s servers: %w", providerName, err)
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "\n%s:\n", providerName)
+	if len(servers) == 0 {
+		fmt.Fprintf(cmd.OutOrStdout(), "  (no servers)\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "  Create: ship servers create my-server --provider %s\n", providerName)
+		return nil
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "  %-12s  %-20s  %-10s  %-8s  %-15s  %s\n",
+		"ID", "NAME", "STATUS", "SIZE", "IP", "REGION")
+	for _, s := range servers {
+		shortID := s.ID
+		if len(shortID) > 10 {
+			shortID = shortID[:10]
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "  %-12s  %-20s  %-10s  %-8s  %-15s  %s\n",
+			shortID, s.Name, s.Status, s.Size, s.PublicIPv4, s.Region)
+	}
+	return nil
 }
 
 // resolveServer takes a name or IP and returns the IP address.
 // If the input is already an IP, returns it unchanged.
 // Otherwise looks up the server by name in the provider.
 func resolveServer(providerName, nameOrIP string) (string, error) {
+	if nameOrIP == "" {
+		// Fall back to global default
+		current := state.Current()
+		if current != "" {
+			s, err := state.LoadServer(current)
+			if err == nil && s.IP != "" {
+				return s.IP, nil
+			}
+		}
+		return "", fmt.Errorf("no server set — use 'ship server use <name>' or set 'server' in ship.toml")
+	}
+
 	// Direct address: IP, IP:port, hostname:port
 	if strings.HasPrefix(nameOrIP, "localhost") {
 		return nameOrIP, nil
@@ -95,9 +105,14 @@ func resolveServer(providerName, nameOrIP string) (string, error) {
 	if strings.Count(nameOrIP, ".") == 3 {
 		return nameOrIP, nil
 	}
-	// Contains port suffix — use directly
 	if strings.Contains(nameOrIP, ":") {
 		return nameOrIP, nil
+	}
+
+	// Look up by name in local cache
+	s, err := state.LoadServer(nameOrIP)
+	if err == nil && s.IP != "" {
+		return s.IP, nil
 	}
 
 	p, err := mustProvider(providerName)

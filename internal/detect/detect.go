@@ -109,6 +109,24 @@ var SystemProviders = []SystemProvider{
 		MinVersion:       "2.0.0",
 		MaxTestedVersion: "3.2.0",
 	},
+	{
+		Name:             "aws",
+		CLI:              "aws",
+		ConfigPaths:      []string{".aws/config", ".aws/credentials"},
+		ValidateCmd:      "aws ec2 describe-instances --max-items 1",
+		VersionCmd:       "aws --version",
+		MinVersion:       "2.0.0",
+		MaxTestedVersion: "2.18.0",
+	},
+	{
+		Name:             "gcp",
+		CLI:              "gcloud",
+		ConfigPaths:      []string{".config/gcloud/credentials.db", ".config/gcloud/application_default_credentials.json"},
+		ValidateCmd:      "gcloud compute instances list --limit 1",
+		VersionCmd:       "gcloud version",
+		MinVersion:       "450.0.0",
+		MaxTestedVersion: "500.0.0",
+	},
 }
 
 var PlatformProviders = []PlatformProvider{
@@ -175,16 +193,21 @@ func DetectSystem(p SystemProvider) ProviderInfo {
 	return info
 }
 
-func DetectPlatform(p PlatformProvider) bool {
-	return DetectPlatformAt(p, "")
-}
-
 func DetectPlatformAt(p PlatformProvider, dir string) bool {
 	if dir == "" {
 		dir, _ = os.Getwd()
 	}
 	_, err := os.Stat(filepath.Join(dir, p.ConfigFile))
 	return err == nil
+}
+
+func FindProvider(name string) *SystemProvider {
+	for i := range SystemProviders {
+		if SystemProviders[i].Name == name {
+			return &SystemProviders[i]
+		}
+	}
+	return nil
 }
 
 // MustAuth ensures the provider CLI is installed and authenticated.

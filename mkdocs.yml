@@ -1,0 +1,34 @@
+site_name: ship
+site_description: Deploy containers to your own VPS
+site_url: https://leviyehonatan.github.io/ship/
+repo_url: https://github.com/leviyehonatan/ship
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Providers: providers.md
+  - Commands: commands.md
+  - Secrets & Keys: secrets.md
+  - Deploy: deploy.md
+  - Migration: migrating.md
+  - Configuration: configuration.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - toc:
+      permalink: true
