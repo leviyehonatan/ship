@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/config"
@@ -115,8 +116,26 @@ Reads ship.toml for configuration and .env for secrets.`,
 		fmt.Fprintln(cmd.OutOrStdout(), "Starting container...")
 		ports := []string{fmt.Sprintf("%d:%d", cfg.Deploy.Port, cfg.Deploy.Port)}
 		var volumes []string
+		// On macOS Docker Desktop, arbitrary paths like /opt/ship/data are blocked.
+		// Use a project-relative path instead — docker build context includes it,
+		// and it's automatically excluded via .gitignore.
+		isLocal := strings.HasPrefix(ip, "localhost") || strings.HasPrefix(ip, "127.")
 		for _, v := range cfg.Volumes {
-			volumes = append(volumes, fmt.Sprintf("/opt/ship/data/%s:%s", cfg.App, v.Path))
+			if isLocal {
+				localPath := filepath.Join(".ship-data", cfg.App, v.Path)
+				os.MkdirAll(localPath, 0755)
+				absPath, _ := filepath.Abs(localPath)
+				volumes = append(volumes, fmt.Sprintf("%s:%s", absPath, v.Path))
+			} else {
+				volumes = append(volumes, fmt.Sprintf("/opt/ship/data/%s:%s", cfg.App, v.Path))
+			}
+		}
+		if len(cfg.Volumes) == 0 {
+			fmt.Fprintln(cmd.OutOrStdout(), "  ⚠ No volumes configured — container state will be lost on redeploy")
+		}
+		if isLocal {
+			// Ensure .ship-data is gitignored
+			addToGitignore(".ship-data/")
 		}
 
 		if err := deployer.RunRemote(deploy.RunOpts{
@@ -253,6 +272,17 @@ var sshCmd = &cobra.Command{
 		fmt.Fprintln(cmd.OutOrStdout(), out)
 		return nil
 	},
+}
+
+func addToGitignore(pattern string) {
+	data, err := os.ReadFile(".gitignore")
+	if err == nil && !strings.Contains(string(data), pattern) {
+		f, _ := os.OpenFile(".gitignore", os.O_APPEND|os.O_WRONLY, 0644)
+		if f != nil {
+			f.WriteString("\n" + pattern + "\n")
+			f.Close()
+		}
+	}
 }
 
 func init() {
