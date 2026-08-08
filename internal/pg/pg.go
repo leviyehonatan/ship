@@ -9,8 +9,8 @@ import (
 	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 )
 
-// Create provisions a Postgres container on the server.
-func Create(client *shipssh.Client, name, password string) (string, error) {
+// Create provisions a Postgres container and returns containerID + password.
+func Create(client *shipssh.Client, name, password string) (containerID string, generatedPassword string, err error) {
 	containerName := "ship-pg-" + name
 	client.Run(fmt.Sprintf("docker stop %s 2>/dev/null; docker rm %s 2>/dev/null", containerName, containerName))
 
@@ -24,9 +24,9 @@ func Create(client *shipssh.Client, name, password string) (string, error) {
 	)
 	out, err := client.Run(runCmd)
 	if err != nil {
-		return "", fmt.Errorf("starting postgres: %w", err)
+		return "", "", fmt.Errorf("starting postgres: %w", err)
 	}
-	return strings.TrimSpace(out), nil
+	return strings.TrimSpace(out), password, nil
 }
 
 // Status returns the uptime of a ship-managed Postgres container.

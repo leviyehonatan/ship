@@ -48,16 +48,22 @@ var pgCreateCmd = &cobra.Command{
 		password, _ := cmd.Flags().GetString("password")
 
 		fmt.Fprintf(cmd.OutOrStdout(), "Creating Postgres on %s...\n", ip)
-		containerID, err := pg.Create(sshClient, name, password)
+		containerID, password, err := pg.Create(sshClient, name, password)
 		if err != nil {
 			return err
 		}
 
+		connStr := pg.ConnectionString(ip, name, password)
+
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ Postgres running (%s)\n", containerID[:12])
-		fmt.Fprintf(cmd.OutOrStdout(), "  Container: ship-pg-%s\n", name)
-		fmt.Fprintf(cmd.OutOrStdout(), "  Port: 5432\n")
-		fmt.Fprintf(cmd.OutOrStdout(), "  Add to ship.toml:\n")
-		fmt.Fprintf(cmd.OutOrStdout(), "    ship secrets set DATABASE_URL=%s\n", pg.ConnectionString(ip, name, password))
+		fmt.Fprintf(cmd.OutOrStdout(), "  Database: %s\n", name)
+		fmt.Fprintf(cmd.OutOrStdout(), "  Username: postgres\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "  Password: %s\n", password)
+		fmt.Fprintf(cmd.OutOrStdout(), "  Host:     %s\n", ip)
+		fmt.Fprintf(cmd.OutOrStdout(), "  Port:     5432\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "  URL:      %s\n", connStr)
+		fmt.Fprintf(cmd.OutOrStdout(), "\n  Save as secret:\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "    ship secrets set DATABASE_URL=%s\n", connStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "  Connect locally:\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "    ship tunnel db\n")
 		return nil
