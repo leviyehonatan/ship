@@ -12,9 +12,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material python-frontmatter
       - run: mkdocs build
-      - run: cp docs/llms.txt site/llms.txt && cp docs/llms-full.txt site/llms-full.txt
+      - run: python scripts/generate-llms.py
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
