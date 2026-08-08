@@ -3,3 +3,4 @@
 ship.toml
 .env.encrypted
 .env/ship-e2e
+/ship-e2e

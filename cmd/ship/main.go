@@ -19,9 +19,7 @@ var rootCmd = &cobra.Command{
 	Use:   "ship",
 	Short: "ship — deploy containers to your own VPS",
 	Long: `ship is a CLI tool that deploys your app to VPS providers
-like Hetzner, Linode, DigitalOcean, and Vultr.
-
-Just like fly deploy, but on your own servers.`,
+like Hetzner, Linode, DigitalOcean, and Vultr.`,
 	SilenceUsage: true,
 	Version:      "v0.2.0",
 }

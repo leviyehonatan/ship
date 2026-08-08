@@ -14,10 +14,9 @@ import (
 
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
-	Short: "Manage encrypted secrets (like fly secrets)",
+	Short: "Manage encrypted secrets",
 	Long: `Manages encrypted secrets stored in .env.encrypted.
-Works like fly secrets — set, unset, list keys directly.
-No plaintext .env file needed.
+Set, unset, list keys directly. No plaintext .env file needed.
 
 Private key: ~/.config/ship/age-key.txt
 Encrypted secrets: .env.encrypted (safe to commit)`,

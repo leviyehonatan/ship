@@ -32,7 +32,7 @@ var localStartCmd = &cobra.Command{
 			fmt.Fprintln(cmd.OutOrStdout(), "Building local SSH image...")
 			// Use a minimal Dockerfile inline
 			df := `FROM alpine:3.21
-RUN apk add --no-cache openssh && ssh-keygen -A && \
+RUN apk add --no-cache openssh docker-cli && ssh-keygen -A && \
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "root:root" | chpasswd && mkdir /var/run/sshd

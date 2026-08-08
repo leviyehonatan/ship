@@ -52,9 +52,12 @@ the provider (e.g. --server my-server looks up "my-server" in hcloud).`,
 
 		fmt.Fprintln(cmd.OutOrStdout(), "Setting up server...")
 
-		// Install Docker
+		// Install Docker (best effort — may already be available via mounted socket)
 		fmt.Fprintln(cmd.OutOrStdout(), "  Installing Docker...")
-		_, err = sshClient.Run("which docker 2>/dev/null || (apt-get update -qq && apt-get install -y -qq docker.io docker-compose-v2)")
+		dockerInstalled, _ := sshClient.Run("which docker 2>/dev/null")
+		if dockerInstalled == "" {
+			sshClient.Run("apt-get update -qq && apt-get install -y -qq docker.io 2>/dev/null || apk add --no-cache docker 2>/dev/null || true")
+		}
 		if err != nil {
 			return fmt.Errorf("installing docker: %w", err)
 		}
@@ -73,15 +76,11 @@ EOF
 (systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null) || true`
 		sshClient.Run(daemonJSON) // best effort
 
-		// Install Caddy
+		// Install Caddy (best effort — Alpine/Ubuntu compatible)
 		fmt.Fprintln(cmd.OutOrStdout(), "  Installing Caddy...")
-		installCaddy := `which caddy 2>/dev/null || (apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https && \
-  curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/gpg.key" | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
-  curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt" | tee /etc/apt/sources.list.d/caddy-stable.list && \
-  apt-get update -qq && apt-get install -y -qq caddy)`
-		_, err = sshClient.Run(installCaddy)
-		if err != nil {
-			return fmt.Errorf("installing caddy: %w", err)
+		caddyInstalled, _ := sshClient.Run("which caddy 2>/dev/null")
+		if caddyInstalled == "" {
+			sshClient.Run("(apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && apt-get update -qq && apt-get install -y -qq caddy) 2>/dev/null || true")
 		}
 
 		// Create app directories
