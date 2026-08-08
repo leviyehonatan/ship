@@ -9,6 +9,7 @@ import (
 
 	"github.com/leviyehonatan/ship/internal/config"
 	deploy "github.com/leviyehonatan/ship/internal/docker"
+	"github.com/leviyehonatan/ship/internal/dockerfile"
 	"github.com/leviyehonatan/ship/internal/releases"
 	"github.com/leviyehonatan/ship/internal/secrets"
 	"github.com/leviyehonatan/ship/internal/services"
@@ -92,6 +93,20 @@ Reads ship.toml for configuration and .env for secrets.`,
 		fmt.Fprintln(cmd.OutOrStdout(), "Snapshotting...")
 		if err := mgr.Create(); err != nil {
 			fmt.Fprintf(cmd.OutOrStdout(), "  Warning: snapshot failed: %v\n", err)
+		}
+
+		// Auto-detect services from Dockerfile
+		if hints := dockerfile.Parse(cfg.Build.Dockerfile); len(hints) > 0 {
+			existing := make(map[string]struct{})
+			for k := range cfg.Services {
+				existing[k] = struct{}{}
+			}
+			for _, h := range hints {
+				if _, ok := existing[h.Name]; !ok {
+					fmt.Fprintf(cmd.OutOrStdout(), "  💡 Detected %s in Dockerfile — add to ship.toml to let ship manage it:\n", h.Name)
+					fmt.Fprint(cmd.OutOrStdout(), h.TOML())
+				}
+			}
 		}
 
 		// Provision services (Postgres, Redis, etc. from ship.toml [services])
