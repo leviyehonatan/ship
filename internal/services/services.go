@@ -35,18 +35,20 @@ func Ensure(client *shipssh.Client, cfg *config.ShipConfig, appName string, isLo
 		runArgs := fmt.Sprintf("-d --name %s --restart unless-stopped --network %s --network-alias %s",
 			containerName, networkName, name)
 
-		// Volume
-		if svc.Volume != "" {
-			var volPath string
-			if isLocal {
-				cwd, _ := os.Getwd()
-				volPath = filepath.Join(cwd, ".ship-data", appName, svc.Volume)
-			} else {
-				volPath = fmt.Sprintf("/opt/ship/data/%s/%s", appName, svc.Volume)
-			}
-			os.MkdirAll(volPath, 0755)
-			runArgs += fmt.Sprintf(" -v %s:%s", volPath, svc.Volume)
+		// Volume — auto-create if not specified
+		volPath := svc.Volume
+		if volPath == "" {
+			volPath = fmt.Sprintf("/data/%s", name) // default: /data/postgres, /data/redis, etc.
 		}
+		var hostPath string
+		if isLocal {
+			cwd, _ := os.Getwd()
+			hostPath = filepath.Join(cwd, ".ship-data", appName, volPath)
+		} else {
+			hostPath = fmt.Sprintf("/opt/ship/data/%s%s", appName, volPath)
+		}
+		os.MkdirAll(hostPath, 0755)
+		runArgs += fmt.Sprintf(" -v %s:%s", hostPath, volPath)
 
 		// Env vars for the service
 		for k, v := range svc.Env {
