@@ -8,6 +8,7 @@ import (
 
 	"github.com/leviyehonatan/ship/internal/detect"
 	"github.com/leviyehonatan/ship/internal/provider"
+	"github.com/leviyehonatan/ship/internal/state"
 	"github.com/leviyehonatan/ship/providers/hetzner"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,25 @@ import (
 var serversCmd = &cobra.Command{
 	Use:   "servers",
 	Short: "Manage your VPS servers",
+}
+
+var serverUseCmd = &cobra.Command{
+	Use:   "use [name]",
+	Short: "Set the default server for all commands",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := state.SetCurrent(args[0]); err != nil {
+			return err
+		}
+		s, err := state.LoadServer(args[0])
+		if err != nil {
+			fmt.Fprintf(cmd.OutOrStdout(), "✓ Set current server to %s\n", args[0])
+			fmt.Fprintf(cmd.OutOrStdout(), "  (server not in local cache — will use name/IP directly)\n")
+			return nil
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "✓ Current server: %s (%s, %s)\n", s.Name, s.IP, s.Size)
+		return nil
+	},
 }
 
 var serverCreateCmd = &cobra.Command{
@@ -73,6 +93,18 @@ var serverCreateCmd = &cobra.Command{
 		fmt.Fprintf(cmd.OutOrStdout(), "  Region:   %s\n", server.Region)
 		fmt.Fprintf(cmd.OutOrStdout(), "  Size:     %s\n", server.Size)
 		fmt.Fprintf(cmd.OutOrStdout(), "  SSH key:  %s\n", sshKey.Name)
+
+		// Save to state
+		state.SaveServer(state.Server{
+			Name:     server.Name,
+			ID:       server.ID,
+			IP:       server.PublicIPv4,
+			Provider: providerName,
+			Size:     server.Size,
+			Region:   server.Region,
+		})
+		state.SetCurrent(server.Name)
+		fmt.Fprintf(cmd.OutOrStdout(), "\n  Set as current server. Use 'ship server use <name>' to switch.\n")
 		return nil
 	},
 }

@@ -35,6 +35,7 @@ func init() {
 	rootCmd.AddCommand(serverCreateCmd)
 	rootCmd.AddCommand(serverListCmd)
 	rootCmd.AddCommand(serverDeleteCmd)
+	rootCmd.AddCommand(serverUseCmd)
 	rootCmd.AddCommand(discoverCmd)
 	rootCmd.AddCommand(migrateCmd)
 	rootCmd.AddCommand(snapshotCmd)

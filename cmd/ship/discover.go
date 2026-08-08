@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/detect"
+	"github.com/leviyehonatan/ship/internal/state"
 	"github.com/spf13/cobra"
 )
 
@@ -88,6 +89,18 @@ If provider is omitted, auto-detects the first configured one.`,
 // If the input is already an IP, returns it unchanged.
 // Otherwise looks up the server by name in the provider.
 func resolveServer(providerName, nameOrIP string) (string, error) {
+	if nameOrIP == "" {
+		// Fall back to global default
+		current := state.Current()
+		if current != "" {
+			s, err := state.LoadServer(current)
+			if err == nil && s.IP != "" {
+				return s.IP, nil
+			}
+		}
+		return "", fmt.Errorf("no server set — use 'ship server use <name>' or set 'server' in ship.toml")
+	}
+
 	// Direct address: IP, IP:port, hostname:port
 	if strings.HasPrefix(nameOrIP, "localhost") {
 		return nameOrIP, nil
@@ -95,9 +108,14 @@ func resolveServer(providerName, nameOrIP string) (string, error) {
 	if strings.Count(nameOrIP, ".") == 3 {
 		return nameOrIP, nil
 	}
-	// Contains port suffix — use directly
 	if strings.Contains(nameOrIP, ":") {
 		return nameOrIP, nil
+	}
+
+	// Look up by name in local cache
+	s, err := state.LoadServer(nameOrIP)
+	if err == nil && s.IP != "" {
+		return s.IP, nil
 	}
 
 	p, err := mustProvider(providerName)

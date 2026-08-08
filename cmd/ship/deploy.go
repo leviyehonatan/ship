@@ -35,7 +35,7 @@ Reads ship.toml for configuration and .env for secrets.`,
 			serverFlag = cfg.Server
 		}
 		if serverFlag == "" {
-			return fmt.Errorf("--server is required (or set 'server' in ship.toml)")
+			return fmt.Errorf("no server configured — use 'ship use <name>' or set 'server' in ship.toml")
 		}
 
 		ip, err := resolveServer("hetzner", serverFlag)
