@@ -34,8 +34,7 @@ cd my-project
 ship init
 ship keys generate keychain   # choose: keychain, file, or env
 ship secrets set DATABASE_URL=postgresql://...
-ship setup
-ship deploy
+ship deploy                          # auto-sets up server on first run
 ship ssl on myapp.com
 ```
 

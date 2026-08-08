@@ -91,6 +91,7 @@ EOF
 		}
 
 		fmt.Fprintln(cmd.OutOrStdout(), "✓ Server ready")
+		sshClient.Run("touch /opt/ship/.setup-complete")
 		fmt.Fprintln(cmd.OutOrStdout(), "  Next: ship deploy")
 		return nil
 	},

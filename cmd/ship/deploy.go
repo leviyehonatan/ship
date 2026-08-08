@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/leviyehonatan/ship/internal/config"
 	deploy "github.com/leviyehonatan/ship/internal/docker"
@@ -68,12 +70,19 @@ Reads ship.toml for configuration and .env for secrets.`,
 			}
 		}
 
-		// Check server is set up (Docker must exist)
-		installed, _ := sshClient.Run("which docker 2>/dev/null")
-		if installed == "" {
-			fmt.Fprintln(cmd.OutOrStdout(), "Docker not found on server.")
-			fmt.Fprintf(cmd.OutOrStdout(), "run 'ship setup --server %s' to install it.\n", ip)
-			return nil
+		// Auto-setup if server hasn't been initialized
+		setupDone, _ := sshClient.Run("test -f /opt/ship/.setup-complete && echo yes || echo no")
+		if !strings.Contains(setupDone, "yes") {
+			fmt.Fprintln(cmd.OutOrStdout(), "First deploy — setting up server...")
+			// Self-call setup via the same binary
+			shipBin, _ := os.Executable()
+			setup := exec.Command(shipBin, "setup")
+			setup.Stdout = cmd.OutOrStdout()
+			setup.Stderr = cmd.ErrOrStderr()
+			setup.Env = os.Environ()
+			if err := setup.Run(); err != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "  Warning: setup incomplete — continuing anyway\n")
+			}
 		}
 
 		// Snapshot before deploy

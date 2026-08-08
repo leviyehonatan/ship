@@ -25,7 +25,6 @@ cd my-project
 ship init
 ship keys generate keychain
 ship secrets set DATABASE_URL=postgresql://...
-ship setup
 ship deploy
 ship ssl on myapp.com
 ```

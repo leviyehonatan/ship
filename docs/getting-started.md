@@ -54,13 +54,11 @@ ship secrets set DATABASE_URL=postgresql://...
 ship pg create mydb          # provisions Postgres container
 # → prints connection string, auto-sets DATABASE_URL secret
 
-# 7. One-time server setup
-ship setup                   # installs Docker + Caddy + log rotation
+# 7. Deploy (auto-sets up server on first run)
+ship deploy                  # first run: installs Docker + Caddy automatically
+                             # subsequent runs: build → push over SSH → run
 
-# 8. Deploy
-ship deploy                  # build → push over SSH → run → auto-SSL
-
-# 9. Day-to-day
+# 8. Day-to-day
 ship logs                    # tail output
 ship status                  # is it up?
 ship releases                # deployment history

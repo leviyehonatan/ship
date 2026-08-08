@@ -21,7 +21,7 @@
 | Command | Description |
 |---|---|
 | `init` | Generate ship.toml (or --from fly) |
-| `setup` | Install Docker + Caddy + log rotation |
+| `setup` | Install Docker + Caddy + log rotation (auto-run on first deploy) |
 | `deploy` | Build → push → run → SSL (auto-snapshot) |
 | `status` | Container health |
 | `logs` | Tail container output |

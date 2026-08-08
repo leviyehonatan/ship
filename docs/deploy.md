@@ -22,10 +22,12 @@ ship deploy
 
 ## Server setup
 
-One-time per server:
+Server setup runs automatically on first deploy. A marker file at `/opt/ship/.setup-complete` tracks whether it's done.
+
+To run manually:
 
 ```bash
-ship setup --server <ip>
+ship setup --server <ip>    # or ship setup (uses current server)
 ```
 
 Installs:
