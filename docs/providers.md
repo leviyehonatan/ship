@@ -96,10 +96,13 @@ ship servers create my-app --provider gcp --size e2-micro --region us-central1-a
 For testing without any cloud provider:
 
 ```bash
-ship local start          # starts a local SSH container
+ship local start          # starts a local SSH container (your key auto-injected)
 ship use local            # target the container
 ship deploy               # builds against local Docker
 ship local stop           # tear down
+
+# Volumes locally use .ship-data/ (gitignored, Docker Desktop compatible)
+# In production, volumes use /opt/ship/data/ on the server
 ```
 
-No provider CLI needed. Uses Docker on your machine.
+No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.

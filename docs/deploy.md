@@ -22,12 +22,10 @@ ship deploy
 
 ## Server setup
 
-Server setup runs automatically on first deploy. A marker file at `/opt/ship/.setup-complete` tracks whether it's done.
-
-To run manually:
+Server setup runs automatically on first deploy (`/opt/ship/.setup-complete` marker). To run manually:
 
 ```bash
-ship setup --server <ip>    # or ship setup (uses current server)
+ship setup --server <ip>
 ```
 
 Installs:
@@ -56,6 +54,18 @@ ship ssl renew             # force renewal
 Caddy auto-fetches Let's Encrypt certificates and auto-renews 30 days before expiry. Set `domains` in ship.toml `[deploy]` to auto-configure on deploy.
 
 Multiple apps on same server: each gets its own Caddy block. Ship never overwrites existing configurations.
+
+## Volumes
+
+```toml
+[[volumes]]
+path = "/data"
+size = "10GB"
+```
+
+- **Production:** mounts at `/opt/ship/data/<app>/<path>`
+- **Local:** mounts at `.ship-data/<app>/<path>` (gitignored, Docker Desktop compatible)
+- **No volumes:** container state lost on redeploy (warning shown)
 
 ## Rollback
 
