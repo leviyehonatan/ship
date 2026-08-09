@@ -9,20 +9,48 @@ server = "46.224.91.70"             # or use 'ship use <name>'
 
 [build]
 dockerfile = "Dockerfile"
-args = ["NEXT_PUBLIC_KEY=abc"]     # build-time env vars
+args = ["NEXT_PUBLIC_KEY=abc"]     # build-time ARG passed to docker build
 
+# Public, non-sensitive env vars — committed to git
+# For secrets use: ship secrets set KEY=value
 [env]
-NODE_ENV = "production"             # public, runtime env vars
+NODE_ENV = "production"
 
 [deploy]
 port = 8080
 domains = ["myapp.com"]             # SSL via Caddy
 health_check = "/health"
+release_command = "npm run db:migrate"  # runs after container starts
+
+# Sidecar services — run alongside the app container
+[services.postgres]
+image = "postgres:16-alpine"
+port = 5432
+env = { POSTGRES_DB = "myapp" }
+
+[services.redis]
+image = "redis:7-alpine"
+port = 6379
 
 [[volumes]]
 path = "/data"
 size = "10GB"
 ```
+
+### Env vars: public vs secrets
+
+- `[env]` — **public** config, committed to git (NODE_ENV, LOG_LEVEL, etc.)
+- `ship secrets set` — **secrets**, encrypted in `.env.encrypted` (DATABASE_URL, API keys, passwords)
+
+Use `ship env` to see all resolved env vars. Secrets are hidden by default; use `--reveal` to show values.
+
+### Services
+
+Sidecar containers defined in `[services.<name>]` are automatically started before deploy if not already running. Each service gets:
+
+- Container name: `<app>-<name>` (e.g. `myapp-postgres`)
+- Restart policy: `unless-stopped`
+- Port mapping: `<port>:<port>`
 
 ## Server resolution
 

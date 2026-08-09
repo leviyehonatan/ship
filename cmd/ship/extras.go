@@ -126,6 +126,9 @@ var doctorCmd = &cobra.Command{
 			return nil
 		}
 		serverAddr := cfg.Server
+		if serverFlag, _ := cmd.Flags().GetString("server"); serverFlag != "" {
+			serverAddr = serverFlag
+		}
 		if serverAddr == "" {
 			fmt.Fprintln(cmd.OutOrStdout(), "\nRemote: (no server configured — use 'ship use <name>')")
 			return nil

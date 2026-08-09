@@ -9,13 +9,15 @@ import (
 )
 
 type ShipConfig struct {
-	App     string            `toml:"app"`
-	Server  string            `toml:"server"`
-	Build   Build             `toml:"build"`
-	Deploy  Deploy            `toml:"deploy"`
-	Env     map[string]string `toml:"env,omitempty"`
-	Volumes []Volume          `toml:"volumes"`
-	EnvFile string            `toml:"env_file,omitempty"`
+	App      string                    `toml:"app"`
+	Server   string                    `toml:"server"`
+	Build    Build                     `toml:"build"`
+	Deploy   Deploy                    `toml:"deploy"`
+	Env      map[string]string         `toml:"env,omitempty"`
+	Volumes  []Volume                  `toml:"volumes"`
+	Services map[string]ServiceConfig  `toml:"services,omitempty"`
+	EnvFile  string                    `toml:"env_file,omitempty"`
+	Warnings []string                  `toml:"-"` // populated by Load for unknown keys
 }
 
 type Build struct {
@@ -25,14 +27,23 @@ type Build struct {
 }
 
 type Deploy struct {
-	Port        int      `toml:"port"`
-	Domains     []string `toml:"domains"`
-	HealthCheck string   `toml:"health_check"`
+	Port           int      `toml:"port"`
+	Domains        []string `toml:"domains"`
+	HealthCheck    string   `toml:"health_check"`
+	ReleaseCommand string   `toml:"release_command,omitempty"`
 }
 
 type Volume struct {
 	Path string `toml:"path"`
 	Size string `toml:"size"`
+}
+
+// ServiceConfig defines a sidecar container (Postgres, Redis, etc.)
+// that ship manages alongside the main app.
+type ServiceConfig struct {
+	Image string            `toml:"image"`
+	Port  int               `toml:"port"`
+	Env   map[string]string `toml:"env,omitempty"`
 }
 
 func Load(path string) (*ShipConfig, error) {
@@ -41,9 +52,16 @@ func Load(path string) (*ShipConfig, error) {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 	var cfg ShipConfig
-	if err := toml.Unmarshal(data, &cfg); err != nil {
+	md, err := toml.Decode(string(data), &cfg)
+	if err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
+
+	// Collect unknown keys as warnings
+	for _, key := range md.Undecoded() {
+		cfg.Warnings = append(cfg.Warnings, fmt.Sprintf("unknown key %q in %s — will be ignored", key, path))
+	}
+
 	if cfg.Build.Dockerfile == "" {
 		cfg.Build.Dockerfile = "Dockerfile"
 	}

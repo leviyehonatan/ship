@@ -4,21 +4,25 @@
 
 ```
 ship deploy
+  → start services (postgres, redis, etc.)
   → docker build (local, layer-cached)
   → docker save | SSH pipe | docker load (no registry)
-  → docker run -e SECRET=... (env from .env.encrypted)
+  → docker run -e SECRET=... (env from .env.encrypted + ship.toml [env])
+  → docker exec <release_command> (migrations, etc.)
   → Caddyfile updated (additive, multi-app safe)
   → pg_dump snapshot taken
 ```
 
 ## Steps
 
-1. **Snapshot** — backs up databases before deploy (safety net)
-2. **Build** — `docker build` with args from ship.toml `[build.args]`
-3. **Push** — image streams over SSH, no Docker Hub needed
-4. **Run** — stops old container, starts new with env vars
-5. **SSL** — updates Caddy config (additive, never overwrites other apps)
-6. **Releases** — records deploy timestamp + image reference
+1. **Services** — starts sidecar containers defined in `[services]` if not running
+2. **Snapshot** — backs up databases before deploy (safety net)
+3. **Build** — `docker build` with args from ship.toml `[build.args]`. Skip with `--skip-build`
+4. **Push** — image streams over SSH, no Docker Hub needed
+5. **Run** — stops old container, starts new with env vars from `ship.toml [env]` + `.env.encrypted`
+6. **Release** — runs `[deploy] release_command` inside the container (e.g. `prisma db push`)
+7. **SSL** — updates Caddy config (additive, never overwrites other apps)
+8. **Releases** — records deploy timestamp + image reference
 
 ## Server setup
 
@@ -41,6 +45,21 @@ args = ["NEXT_PUBLIC_KEY=abc", "NODE_ENV=production"]
 ```
 
 Passed as `--build-arg` to `docker build`. Docker's layer cache handles rebuilds — if args haven't changed, build is instant.
+
+To skip building when only secrets changed, use `--skip-build`:
+
+```bash
+ship deploy --skip-build
+```
+
+## Release command
+
+```toml
+[deploy]
+release_command = "npm run db:migrate"
+```
+
+Runs inside the new container after it starts. Use for database migrations, asset compilation, or cache warming. If it fails, a warning is shown but the deploy continues.
 
 ## SSL
 

@@ -147,6 +147,52 @@ func initSecrets() {
 	secretsCmd.AddCommand(keysImportCmd)
 }
 
+var envCmd = &cobra.Command{
+	Use:   "env",
+	Short: "Show all resolved env vars (public + secrets)",
+	Long:  `Merges ship.toml [env] with decrypted secrets and prints the result.
+Values from secrets are hidden by default. Use --reveal to show them.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load(config.DefaultPath())
+		if err != nil {
+			return fmt.Errorf("loading ship.toml: %w", err)
+		}
+		printWarnings(cmd, cfg.Warnings)
+
+		envVars := make(map[string]string)
+		for k, v := range cfg.Env {
+			envVars[k] = v
+		}
+
+		reveal, _ := cmd.Flags().GetBool("reveal")
+		secretsPath := ".env.encrypted"
+		secretKeys := make(map[string]bool)
+		if _, err := os.Stat(secretsPath); err == nil {
+			secretsMap, err := secrets.ReadAll(secretsPath)
+			if err == nil {
+				for k, v := range secretsMap {
+					secretKeys[k] = true
+					envVars[k] = v
+				}
+			}
+		}
+
+		if len(envVars) == 0 {
+			fmt.Fprintln(cmd.OutOrStdout(), "No env vars configured.")
+			return nil
+		}
+
+		for k, v := range envVars {
+			if secretKeys[k] && !reveal {
+				fmt.Fprintf(cmd.OutOrStdout(), "%s=<secret>\n", k)
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "%s=%s\n", k, v)
+			}
+		}
+		return nil
+	},
+}
+
 var keysExportCmd = &cobra.Command{
 	Use:   "export-key",
 	Short: "Print the age private key (for syncing across devices)",

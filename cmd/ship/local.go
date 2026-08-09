@@ -4,10 +4,47 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+// detectDockerSocket finds the Docker socket path using multiple strategies.
+func detectDockerSocket() string {
+	// 1. DOCKER_HOST env var
+	if host := os.Getenv("DOCKER_HOST"); host != "" {
+		sock := strings.TrimPrefix(host, "unix://")
+		if _, err := os.Stat(sock); err == nil {
+			return sock
+		}
+	}
+
+	// 2. docker context inspect (works with colima, Orbstack, etc.)
+	if out, err := exec.Command("docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}").Output(); err == nil {
+		sock := strings.TrimPrefix(strings.TrimSpace(string(out)), "unix://")
+		if _, err := os.Stat(sock); err == nil {
+			return sock
+		}
+	}
+
+	// 3. Common paths
+	home, _ := os.UserHomeDir()
+	candidates := []string{
+		"/var/run/docker.sock",
+		filepath.Join(home, ".docker", "run", "docker.sock"),
+		filepath.Join(home, ".colima", "default", "docker.sock"),
+		filepath.Join(home, ".colima", "docker.sock"),
+		filepath.Join(home, ".orbstack", "run", "docker.sock"),
+	}
+	for _, sock := range candidates {
+		if _, err := os.Stat(sock); err == nil {
+			return sock
+		}
+	}
+
+	return "/var/run/docker.sock" // fallback
+}
 
 var localCmd = &cobra.Command{
 	Use:   "local",
@@ -49,10 +86,7 @@ CMD ["/usr/sbin/sshd", "-D", "-e"]
 
 		exec.Command("docker", "rm", "-f", "ship-local").Run()
 
-		dockerSock := "/var/run/docker.sock"
-		if _, err := os.Stat(dockerSock); err != nil {
-			dockerSock = os.ExpandEnv("$HOME/.docker/run/docker.sock")
-		}
+		dockerSock := detectDockerSocket()
 
 		fmt.Fprintln(cmd.OutOrStdout(), "Starting local server...")
 		run := exec.Command("docker", "run", "-d", "--rm",
@@ -68,7 +102,7 @@ CMD ["/usr/sbin/sshd", "-D", "-e"]
 		}
 		containerID := strings.TrimSpace(string(out))
 
-		fmt.Fprintf(cmd.OutOrStdout(), "✓ Local server running (%s)\n", containerID[:12])
+		fmt.Fprintf(cmd.OutOrStdout(), "✓ Local server running (%s, socket %s)\n", containerID[:12], dockerSock)
 		// Inject host SSH key for passwordless access
 		home, _ := os.UserHomeDir()
 		keyPath := home + "/.ssh/id_rsa"
@@ -111,10 +145,7 @@ var localSetupCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Start local
 		exec.Command("docker", "rm", "-f", "ship-local").Run()
-		dockerSock := "/var/run/docker.sock"
-		if _, err := os.Stat(dockerSock); err != nil {
-			dockerSock = os.ExpandEnv("$HOME/.docker/run/docker.sock")
-		}
+		dockerSock := detectDockerSocket()
 		run := exec.Command("docker", "run", "-d", "--rm",
 			"--name", "ship-local",
 			"-p", "2222:22",

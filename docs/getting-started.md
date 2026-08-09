@@ -46,19 +46,25 @@ ship keys generate keychain  # macOS Keychain (syncs via iCloud)
 ship keys generate file       # cross-platform
 ship keys generate env        # CI — set SHIP_AGE_KEY manually
 
-# 5. Set secrets
-ship secrets set NODE_ENV=production
+# 5. Set secrets (credentials, API keys — encrypted in .env.encrypted)
 ship secrets set DATABASE_URL=postgresql://...
+ship secrets set RESEND_API_KEY=re_...
 
-# 6. Add a database (optional)
-ship pg create mydb          # provisions Postgres container
-# → prints connection string, auto-sets DATABASE_URL secret
+# 5b. Optionally, set public env vars in ship.toml [env]
+#     (non-sensitive, committed to git — NODE_ENV, LOG_LEVEL, etc.)
 
-# 7. Deploy (auto-sets up server on first run)
+# 6. Review resolved env vars
+ship env                     # secrets hidden
+ship env --reveal            # show all values
+
+# 7. Add sidecar services (Postgres, Redis, etc.) to ship.toml
+#     See docs/configuration.md for [services] section
+
+# 8. Deploy (auto-sets up server on first run)
 ship deploy                  # first run: installs Docker + Caddy automatically
                              # subsequent runs: build → push over SSH → run
 
-# 8. Day-to-day
+# 9. Day-to-day
 ship logs                    # tail output
 ship status                  # is it up?
 ship releases                # deployment history

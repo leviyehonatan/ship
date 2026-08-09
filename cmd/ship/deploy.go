@@ -33,6 +33,7 @@ Reads ship.toml for configuration and .env for secrets.`,
 		if err != nil {
 			return fmt.Errorf("loading ship.toml: %w\n  run 'ship init' first", err)
 		}
+		printWarnings(cmd, cfg.Warnings)
 
 		serverFlag, _ := cmd.Flags().GetString("server")
 		if serverFlag == "" {
@@ -86,7 +87,25 @@ Reads ship.toml for configuration and .env for secrets.`,
 			}
 		}
 
-		// Snapshot before deploy
+		// Start sidecar services (Postgres, Redis, etc.) if configured
+		for name, svc := range cfg.Services {
+			containerName := cfg.App + "-" + name
+			running, _ := sshClient.Run(fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", containerName))
+			if strings.TrimSpace(running) == "" {
+				fmt.Fprintf(cmd.OutOrStdout(), "Starting %s...\n", name)
+				envArgs := ""
+				for k, v := range svc.Env {
+					envArgs += fmt.Sprintf(" -e %s='%s'", k, v)
+				}
+				startCmd := fmt.Sprintf(
+					"docker rm -f %s 2>/dev/null; docker run -d --name %s --restart unless-stopped -p %d:%d%s %s",
+					containerName, containerName, svc.Port, svc.Port, envArgs, svc.Image,
+				)
+				if _, err := sshClient.Run(startCmd); err != nil {
+					fmt.Fprintf(cmd.OutOrStdout(), "  Warning: failed to start %s: %v\n", name, err)
+				}
+			}
+		}
 		mgr := snapshot.NewManager(sshClient, cfg.App)
 		fmt.Fprintln(cmd.OutOrStdout(), "Snapshotting...")
 		if err := mgr.Create(); err != nil {
@@ -94,16 +113,21 @@ Reads ship.toml for configuration and .env for secrets.`,
 		}
 
 		// Build (with build args from ship.toml if present)
-		fmt.Fprintf(cmd.OutOrStdout(), "Building %s...\n", cfg.App)
 		deployer := deploy.NewDeployerWithEnv(cfg.App, envVars, sshClient)
-		if len(cfg.Build.Args) > 0 {
-			if err := deployer.BuildWithArgs(cmd.Context(), cfg.Build.Args); err != nil {
-				return fmt.Errorf("build: %w", err)
+		skipBuild, _ := cmd.Flags().GetBool("skip-build")
+		if !skipBuild {
+			fmt.Fprintf(cmd.OutOrStdout(), "Building %s...\n", cfg.App)
+			if len(cfg.Build.Args) > 0 {
+				if err := deployer.BuildWithArgs(cmd.Context(), cfg.Build.Args); err != nil {
+					return fmt.Errorf("build: %w", err)
+				}
+			} else {
+				if err := deployer.Build(cmd.Context()); err != nil {
+					return fmt.Errorf("build: %w", err)
+				}
 			}
 		} else {
-			if err := deployer.Build(cmd.Context()); err != nil {
-				return fmt.Errorf("build: %w", err)
-			}
+			fmt.Fprintln(cmd.OutOrStdout(), "Skipping build (--skip-build)")
 		}
 
 		// Push
@@ -155,6 +179,19 @@ Reads ship.toml for configuration and .env for secrets.`,
 				fmt.Fprintf(cmd.OutOrStdout(), "  Warning: SSL setup failed: %v\n", err)
 			} else {
 				fmt.Fprintf(cmd.OutOrStdout(), "  https://%s (Let's Encrypt — may take a moment)\n", domain)
+			}
+		}
+
+		// Run release command (migrations, etc.) if configured
+		if cfg.Deploy.ReleaseCommand != "" {
+			fmt.Fprintf(cmd.OutOrStdout(), "Running release command...\n")
+			releaseCmd := fmt.Sprintf("docker exec %s %s", cfg.App, cfg.Deploy.ReleaseCommand)
+			if out, err := sshClient.Run(releaseCmd); err != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "  Warning: release command failed: %v\n%s\n", err, out)
+			} else {
+				if strings.TrimSpace(out) != "" {
+					fmt.Fprint(cmd.OutOrStdout(), out)
+				}
 			}
 		}
 
@@ -288,4 +325,10 @@ func addToGitignore(pattern string) {
 func init() {
 	deployCmd.Flags().String("server", "", "Server name or IP to deploy to")
 	logsCmd.Flags().String("tail", "50", "Number of lines to tail")
+}
+
+func printWarnings(cmd *cobra.Command, warnings []string) {
+	for _, w := range warnings {
+		fmt.Fprintf(cmd.ErrOrStderr(), "⚠ %s\n", w)
+	}
 }

@@ -56,6 +56,18 @@ With a name, sets it as the default target for all commands.`,
 			return nil
 		}
 
+		// "local" is a special server name — auto-create the entry
+		if args[0] == "local" {
+			state.SaveServer(state.Server{
+				Name:     "local",
+				ID:       "local",
+				IP:       "localhost:2222",
+				Provider: "",
+				Size:     "local",
+				Region:   "local",
+			})
+		}
+
 		if err := state.SetCurrent(args[0]); err != nil {
 			return err
 		}

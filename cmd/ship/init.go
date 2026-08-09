@@ -151,10 +151,12 @@ app = "%s"
 		}
 
 		if len(cfg.Env) > 0 {
-			data += "\n[env]\n"
+			data += "\n# Public, non-sensitive env vars — committed to git\n# For secrets use: ship secrets set KEY=value\n[env]\n"
 			for k, v := range cfg.Env {
 				data += fmt.Sprintf("%s = %q\n", k, v)
 			}
+		} else {
+			data += "\n# Public, non-sensitive env vars — committed to git\n# For secrets use: ship secrets set KEY=value\n# [env]\n# NODE_ENV = \"production\"\n"
 		}
 
 		data += fmt.Sprintf(`
@@ -336,10 +338,12 @@ dockerfile = "%s"
 	}
 
 	if len(cfg.Env) > 0 {
-		data2 += "\n[env]\n"
+		data2 += "\n# Public, non-sensitive env vars — committed to git\n# For secrets use: ship secrets set KEY=value\n[env]\n"
 		for k, v := range cfg.Env {
 			data2 += fmt.Sprintf("%s = %q\n", k, v)
 		}
+	} else {
+		data2 += "\n# Public, non-sensitive env vars — committed to git\n# For secrets use: ship secrets set KEY=value\n# [env]\n# NODE_ENV = \"production\"\n"
 	}
 
 	data2 += fmt.Sprintf(`

@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 	Long: `ship is a CLI tool that deploys your app to VPS providers
 like Hetzner, Linode, DigitalOcean, and Vultr.`,
 	SilenceUsage: true,
-	Version:      "v0.2.0",
+	Version:      "v0.3.0",
 }
 
 func init() {
@@ -45,6 +45,7 @@ func init() {
 	rootCmd.AddCommand(snapshotsCmd)
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(secretsCmd)
+	rootCmd.AddCommand(envCmd)
 	rootCmd.AddCommand(keysCmd)
 	rootCmd.AddCommand(sslCmd)
 	rootCmd.AddCommand(pgCmd)
@@ -68,6 +69,9 @@ func init() {
 	rootCmd.AddCommand(sizesCmd)
 
 	setupCmd.Flags().String("server", "", "Server name or IP")
+	doctorCmd.Flags().String("server", "", "Server name or IP")
+	deployCmd.Flags().Bool("skip-build", false, "Skip docker build (use existing image)")
+	envCmd.Flags().Bool("reveal", false, "Show secret values in plaintext")
 	serverCreateCmd.Flags().String("region", "nbg1", "Region (e.g. nbg1, fsn1, hel1)")
 	serverCreateCmd.Flags().String("size", "cx23", "Server size (e.g. cx23, cx33)")
 	serverCreateCmd.Flags().String("image", "ubuntu-24.04", "OS image")

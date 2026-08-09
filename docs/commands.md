@@ -22,7 +22,7 @@
 |---|---|
 | `init` | Generate ship.toml (or --from fly) |
 | `setup` | Install Docker + Caddy + log rotation (auto-run on first deploy) |
-| `deploy` | Build → push → run → SSL (auto-snapshot) |
+| `deploy` | Build → push → run → SSL (auto-snapshot). `--skip-build` to skip docker build, `--server <name>` to override target |
 | `status` | Container health |
 | `logs` | Tail container output |
 | `ssh` | Server overview |
@@ -31,12 +31,13 @@
 | `releases` | Deployment history |
 | `image` | Show deployed image info |
 | `services` | Show exposed ports |
-| `doctor` | Diagnose local tools + server health |
+| `doctor` | Diagnose local tools + server health. `--server <name>` to check a specific server without ship.toml |
 
 ## Secrets
 
 | Command | Description |
 |---|---|
+| `env` | Show all resolved env vars (public + secrets). Secrets hidden by default; `--reveal` to show values |
 | `keys generate` | Create encryption key (choose storage) |
 | `keys status` | Show where key is stored |
 | `secrets set KEY=VALUE` | Store encrypted secret |
