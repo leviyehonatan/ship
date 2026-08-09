@@ -50,7 +50,7 @@ Specify a provider name to filter to just one.`,
 		}
 		if !anyFound {
 			fmt.Fprintln(cmd.OutOrStdout(), "No servers found on any provider.")
-			fmt.Fprintln(cmd.OutOrStdout(), "  Install a provider CLI: brew install hcloud")
+			fmt.Fprintln(cmd.OutOrStdout(), "  No providers configured. Install a provider CLI to get started.")
 		}
 		return nil
 	},
@@ -87,7 +87,6 @@ func printServers(cmd *cobra.Command, p provider.Provider, providerName string) 
 // Otherwise looks up the server by name in the provider.
 func resolveServer(providerName, nameOrIP string) (string, error) {
 	if nameOrIP == "" {
-		// Fall back to global default
 		current := state.Current()
 		if current != "" {
 			s, err := state.LoadServer(current)
@@ -98,38 +97,63 @@ func resolveServer(providerName, nameOrIP string) (string, error) {
 		return "", fmt.Errorf("no server set — use 'ship server use <name>' or set 'server' in ship.toml")
 	}
 
+	// provider/name syntax
+	if before, after, ok := strings.Cut(nameOrIP, "/"); ok {
+		providerName = before
+		nameOrIP = after
+	}
+
 	// Direct address: IP, IP:port, hostname:port
-	if strings.HasPrefix(nameOrIP, "localhost") {
-		return nameOrIP, nil
-	}
-	if strings.Count(nameOrIP, ".") == 3 {
-		return nameOrIP, nil
-	}
-	if strings.Contains(nameOrIP, ":") {
+	if strings.HasPrefix(nameOrIP, "localhost") || strings.Count(nameOrIP, ".") == 3 || strings.Contains(nameOrIP, ":") {
 		return nameOrIP, nil
 	}
 
-	// Look up by name in local cache
-	s, err := state.LoadServer(nameOrIP)
-	if err == nil && s.IP != "" {
+	// Local cache
+	if s, err := state.LoadServer(nameOrIP); err == nil && s.IP != "" {
 		return s.IP, nil
 	}
 
-	p, err := mustProvider(providerName)
-	if err != nil {
-		return "", err
+	// Live lookup — search specified provider or all providers
+	search := func(p provider.Provider) (provider.Server, bool) {
+		servers, err := p.ListServers(context.Background())
+		if err != nil {
+			return provider.Server{}, false
+		}
+		for _, s := range servers {
+			if s.Name == nameOrIP || s.ID == nameOrIP {
+				return s, true
+			}
+		}
+		return provider.Server{}, false
 	}
 
-	servers, err := p.ListServers(context.Background())
-	if err != nil {
-		return "", fmt.Errorf("looking up %s: %w", nameOrIP, err)
+	providers := []string{}
+	if providerName != "" {
+		providers = append(providers, providerName)
+	} else {
+		for _, sp := range detect.SystemProviders {
+			providers = append(providers, sp.Name)
+		}
 	}
 
-	for _, s := range servers {
-		if s.Name == nameOrIP || s.ID == nameOrIP {
+	for _, pn := range providers {
+		p, err := mustProvider(pn)
+		if err != nil {
+			continue
+		}
+		if s, ok := search(p); ok {
+			// Cache result locally
+			state.SaveServer(state.Server{
+				Name:     s.Name,
+				ID:       s.ID,
+				IP:       s.PublicIPv4,
+				Provider: pn,
+				Size:     s.Size,
+				Region:   s.Region,
+			})
 			return s.PublicIPv4, nil
 		}
 	}
 
-	return "", fmt.Errorf("server %q not found on %s — check the name with 'ship discover'", nameOrIP, providerName)
+	return "", fmt.Errorf("server %q not found — check with 'ship discover'", nameOrIP)
 }

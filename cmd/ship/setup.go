@@ -37,7 +37,7 @@ the provider (e.g. --server my-server looks up "my-server" in hcloud).`,
 		}
 
 		// Resolve name to IP
-		ip, err := resolveServer("hetzner", serverAddr)
+		ip, err := resolveServer("", serverAddr)
 		if err != nil {
 			return err
 		}

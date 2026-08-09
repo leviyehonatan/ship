@@ -71,6 +71,24 @@ func DefaultPath() string {
 	return "ship.toml"
 }
 
+func SetServer(path string, server string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading %s: %w", path, err)
+	}
+	var cfg ShipConfig
+	if err := toml.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("parsing %s: %w", path, err)
+	}
+	cfg.Server = server
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
+}
+
 func HomeDir() string {
 	home, _ := os.UserHomeDir()
 	return home

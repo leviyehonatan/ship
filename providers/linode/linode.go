@@ -14,7 +14,7 @@ type Provider struct{}
 func New() *Provider                                              { return &Provider{} }
 func (p *Provider) Name() string                                  { return "linode" }
 func (p *Provider) AuthCommand() string                           { return "linode-cli linodes list" }
-func (p *Provider) SetupInstructions() string                      { return "Install: brew install linode-cli\nThen: linode-cli configure" }
+func (p *Provider) SetupInstructions() string                      { return "linode-cli not installed.\n  Install: https://github.com/linode/linode-cli\nThen: linode-cli configure" }
 func (p *Provider) Validate(ctx context.Context) error             { return exec.CommandContext(ctx, "linode-cli", "linodes", "list").Run() }
 
 func (p *Provider) CreateServer(ctx context.Context, opts provider.CreateServerOpts) (*provider.Server, error) {

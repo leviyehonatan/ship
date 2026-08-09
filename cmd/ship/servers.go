@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
+	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/leviyehonatan/ship/internal/detect"
 	"github.com/leviyehonatan/ship/internal/provider"
 	"github.com/leviyehonatan/ship/internal/state"
@@ -25,39 +29,97 @@ var serversCmd = &cobra.Command{
 
 var serverUseCmd = &cobra.Command{
 	Use:   "use [name]",
-	Short: "Set the default server",
-	Long: `Without arguments, shows available servers from all configured providers.
-With a name, sets it as the default target for all commands.`,
+	Short: "Set the default server for this project",
+	Long: `Without arguments, shows available servers from all configured providers
+and lets you pick one interactively.
+
+With a name, sets the server in your project's ship.toml (if present)
+and as the global default. Server names can be scoped: hetzner/my-server.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			// Show available servers
-			fmt.Fprintln(cmd.OutOrStdout(), "Available servers:")
+			// Collect all servers from all providers
+			type entry struct {
+				name     string
+				size     string
+				ip       string
+				status   string
+				provider string
+			}
+			var servers []entry
+			providers := make(map[string]provider.Provider)
+
 			for _, sp := range detect.SystemProviders {
 				p, _ := mustProvider(sp.Name)
 				if p == nil {
 					continue
 				}
-				servers, err := p.ListServers(context.Background())
-				if err != nil || len(servers) == 0 {
+				list, err := p.ListServers(context.Background())
+				if err != nil || len(list) == 0 {
 					continue
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "  %s:\n", sp.Name)
-				for _, s := range servers {
-					marker := ""
-					if state.Current() == s.Name {
-						marker = " ← current"
-					}
-					fmt.Fprintf(cmd.OutOrStdout(), "    %-20s  %-8s  %-15s  %s%s\n",
-						s.Name, s.Size, s.PublicIPv4, s.Status, marker)
+				for _, s := range list {
+					servers = append(servers, entry{s.Name, s.Size, s.PublicIPv4, s.Status, sp.Name})
+				}
+				providers[sp.Name] = p
+			}
+
+			if len(servers) == 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), "No servers found.")
+				fmt.Fprintln(cmd.OutOrStdout(), "  Create one: ship servers create <name>")
+				return nil
+			}
+
+			current := state.Current()
+			fmt.Fprintln(cmd.OutOrStdout(), "Available servers:")
+			for i, s := range servers {
+				marker := ""
+				if current == s.name {
+					marker = " ← current"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "  %2d. %-20s %-8s %-15s %-8s%s\n",
+					i+1, s.name, s.size, s.ip, s.status, marker)
+			}
+
+			fmt.Fprintf(cmd.OutOrStdout(), "\n  Pick a server (1-%d) or name: ", len(servers))
+			reader := bufio.NewReader(os.Stdin)
+			input, _ := reader.ReadString('\n')
+			input = strings.TrimSpace(input)
+
+			var choice string
+			if n, err := strconv.Atoi(input); err == nil && n >= 1 && n <= len(servers) {
+				choice = servers[n-1].name
+			} else if input != "" {
+				choice = input
+			} else {
+				return nil
+			}
+
+			if err := state.SetCurrent(choice); err != nil {
+				return err
+			}
+			if _, err := os.Stat("ship.toml"); err == nil {
+				if err := config.SetServer("ship.toml", choice); err == nil {
+					fmt.Fprintf(cmd.OutOrStdout(), "✓ Set server in ship.toml\n")
 				}
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "\n  Set default: ship use <name>\n")
+			s, err := state.LoadServer(choice)
+			if err != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "✓ Default server: %s\n", choice)
+				return nil
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "✓ Default server: %s (%s, %s)\n", s.Name, s.IP, s.Size)
 			return nil
 		}
 
 		if err := state.SetCurrent(args[0]); err != nil {
 			return err
+		}
+		// If in a project directory, write to ship.toml too
+		if _, err := os.Stat("ship.toml"); err == nil {
+			if err := config.SetServer("ship.toml", args[0]); err == nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "✓ Set server in ship.toml\n")
+			}
 		}
 		s, err := state.LoadServer(args[0])
 		if err != nil {
@@ -93,7 +155,7 @@ var serverCreateCmd = &cobra.Command{
 				}
 			}
 			if providerName == "" {
-				return fmt.Errorf("no provider configured — install one: brew install hcloud")
+				return fmt.Errorf("no provider configured — install a provider CLI (hcloud, linode-cli, etc.)")
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Using provider: %s\n", providerName)
 		}

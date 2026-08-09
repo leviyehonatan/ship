@@ -23,10 +23,9 @@ func (p *Provider) AuthCommand() string {
 }
 
 func (p *Provider) SetupInstructions() string {
-	return `hcloud is not authenticated.
+	return `hcloud is not installed or not authenticated.
 
-  Install the CLI:
-    brew install hcloud
+  Install: https://github.com/hetznercloud/cli
 
   Then authenticate:
     hcloud context create my-project

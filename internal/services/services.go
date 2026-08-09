@@ -5,12 +5,26 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/config"
 	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 )
+
+func dockerRun(client *shipssh.Client, cmd string) (string, error) {
+	if client == nil {
+		return runLocal(cmd)
+	}
+	return client.Run(cmd)
+}
+
+func runLocal(cmd string) (string, error) {
+	run := exec.Command("sh", "-c", cmd)
+	out, err := run.Output()
+	return string(out), err
+}
 
 // Ensure provisions all services defined in ship.toml.
 // Returns a map of service name → connection string for env injection.
@@ -19,19 +33,19 @@ func Ensure(client *shipssh.Client, cfg *config.ShipConfig, appName string, isLo
 	networkName := fmt.Sprintf("ship-net-%s", appName)
 
 	// Create shared bridge network for this app
-	client.Run(fmt.Sprintf("docker network create %s 2>/dev/null || true", networkName))
+	dockerRun(client, fmt.Sprintf("docker network create %s 2>/dev/null || true", networkName))
 
 	for name, svc := range cfg.Services {
 		containerName := fmt.Sprintf("ship-svc-%s-%s", appName, name)
 
 		// Check if already running
-		status, _ := client.Run(fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", containerName))
+		status, _ := dockerRun(client, fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", containerName))
 		if strings.Contains(status, "Up") {
 			continue
 		}
 
 		// Stop and remove old container
-		client.Run(fmt.Sprintf("docker stop %s 2>/dev/null; docker rm %s 2>/dev/null", containerName, containerName))
+		dockerRun(client, fmt.Sprintf("docker stop %s 2>/dev/null; docker rm %s 2>/dev/null", containerName, containerName))
 
 		// Build run command with bridge network
 		runArgs := fmt.Sprintf("-d --name %s --restart unless-stopped --network %s --network-alias %s",
@@ -77,7 +91,7 @@ func Ensure(client *shipssh.Client, cfg *config.ShipConfig, appName string, isLo
 			env["REDIS_URL"] = redisURL
 		}
 
-		client.Run(fmt.Sprintf("docker run %s %s", runArgs, svc.Image))
+		dockerRun(client, fmt.Sprintf("docker run %s %s", runArgs, svc.Image))
 
 		// Connection strings use service name (bridge network DNS), not 127.0.0.1
 		switch {
@@ -101,7 +115,7 @@ func Ensure(client *shipssh.Client, cfg *config.ShipConfig, appName string, isLo
 
 func Status(client *shipssh.Client, appName, serviceName string) (string, error) {
 	containerName := fmt.Sprintf("ship-svc-%s-%s", appName, serviceName)
-	out, err := client.Run(fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", containerName))
+	out, err := dockerRun(client, fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", containerName))
 	if err != nil {
 		return "", err
 	}

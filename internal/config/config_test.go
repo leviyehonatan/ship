@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -67,5 +68,33 @@ func TestDefaults(t *testing.T) {
 	}
 	if cfg.EnvFile != ".env" {
 		t.Errorf("default env = %q, want .env", cfg.EnvFile)
+	}
+}
+
+func TestSetServer(t *testing.T) {
+	path := t.TempDir() + "/ship.toml"
+	content := `app = "test"
+
+[build]
+dockerfile = "Dockerfile"
+
+[deploy]
+port = 3000
+`
+	os.WriteFile(path, []byte(content), 0644)
+
+	if err := SetServer(path, "my-server"); err != nil {
+		t.Fatalf("SetServer: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !strings.Contains(string(data), `server = "my-server"`) {
+		t.Errorf("expected server field, got:\n%s", string(data))
+	}
+	if !strings.Contains(string(data), `app = "test"`) {
+		t.Error("lost app field")
 	}
 }

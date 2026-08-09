@@ -15,7 +15,7 @@ type Provider struct{}
 func New() *Provider                                    { return &Provider{} }
 func (p *Provider) Name() string                        { return "gcp" }
 func (p *Provider) AuthCommand() string                 { return "gcloud compute instances list" }
-func (p *Provider) SetupInstructions() string            { return "Install: brew install google-cloud-sdk\nThen: gcloud auth login && gcloud config set project <project-id>" }
+func (p *Provider) SetupInstructions() string            { return "gcloud CLI not installed.\n  Install: https://cloud.google.com/sdk/docs/install\nThen: gcloud auth login && gcloud config set project <project-id>" }
 func (p *Provider) Validate(ctx context.Context) error   { return exec.CommandContext(ctx, "gcloud", "compute", "instances", "list", "--limit", "1").Run() }
 
 func (p *Provider) CreateServer(ctx context.Context, opts provider.CreateServerOpts) (*provider.Server, error) {

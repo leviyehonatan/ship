@@ -5,16 +5,17 @@
 | Command | Description |
 |---|---|
 | `whoami` | Show configured providers and platforms |
-| `discover` | List existing servers |
+| `discover` | List existing servers from all providers |
 | `servers create [name]` | Provision a VPS |
 | `servers list` | List all servers |
 | `servers delete [id]` | Delete a server |
-| `use [name]` | Set default server |
+| `use` | Pick a server interactively and set as default |
+| `use [name]` | Set server by name (or `provider/name`) |
 | `scale` | Show or change server size |
 | `sizes` | Compare server pricing |
 | `regions` | List available regions |
 | `dashboard` | Open provider web console |
-| `local start/stop` | Run local SSH container for testing |
+| `local start/stop` | Manage local SSH test container |
 
 ## Deploy
 
@@ -22,7 +23,11 @@
 |---|---|
 | `init` | Generate ship.toml (or --from fly) |
 | `setup` | Install Docker + Caddy + log rotation (auto-run on first deploy) |
-| `deploy` | Build → push → run → SSL (auto-snapshot) |
+| `deploy` | Build locally, push over SSH, run on server |
+| `deploy --local` | Build and run on local Docker (no SSH, no SSL) |
+| `down` | Stop app + services, remove network |
+| `down --local` | Same, for local Docker |
+| `down --volumes` | Also remove persistent data |
 | `status` | Container health |
 | `logs` | Tail container output |
 | `ssh` | Server overview |
@@ -32,6 +37,9 @@
 | `image` | Show deployed image info |
 | `services` | Show exposed ports |
 | `doctor` | Diagnose local tools + server health |
+
+All commands support `-v` / `--verbose` for detailed output in the terminal.
+Logs are also written to `~/.config/ship/logs/` on every invocation.
 
 ## Secrets
 

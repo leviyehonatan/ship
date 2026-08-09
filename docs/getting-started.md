@@ -2,13 +2,16 @@
 
 ## What you need
 
-- A VPS provider account (Hetzner, with Linode/DO/Vultr coming)
+- A VPS provider account (Hetzner, Linode, DO, Vultr, AWS, GCP)
 - The provider's CLI installed and authenticated (`hcloud`, `doctl`, etc.)
+- Docker running on your local machine (for building)
 - A project with a Dockerfile
 
 ## The mental model
 
-Ship identifies deployments by `app` name in ship.toml. This name is unique on a server — all containers, volumes, snapshots, and releases are namespaced by it.
+Ship builds images locally (where you have Node.js, npm, and source code)
+and pushes them to your server over SSH. The server only needs Docker —
+no build toolchain, no source upload, no registry.
 
 ```
               ┌──────────┐
@@ -97,7 +100,15 @@ ship deploy --server staging  # per-command override
 
 **Test locally before deploying:**
 ```bash
-ship local start        # starts local SSH container (fake VPS)
+ship deploy --local       # build and run on your machine (no SSH)
+ship status               # is it up?
+ship logs                 # tail output
+ship down --local         # stop and clean up
+```
+
+**Test the full SSH pipeline locally:**
+```bash
+ship local start          # starts local SSH container (fake VPS)
 ship use local
 ship deploy
 ship local stop

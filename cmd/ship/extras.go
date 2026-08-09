@@ -131,7 +131,7 @@ var doctorCmd = &cobra.Command{
 			return nil
 		}
 
-		ip, err := resolveServer("hetzner", serverAddr)
+		ip, err := resolveServer("", serverAddr)
 		if err != nil {
 			fmt.Fprintf(cmd.OutOrStdout(), "\nRemote %s: unreachable (%v)\n", serverAddr, err)
 			return nil

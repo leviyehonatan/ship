@@ -215,8 +215,7 @@ func FindProvider(name string) *SystemProvider {
 func MustAuth(p SystemProvider) error {
 	if _, err := exec.LookPath(p.CLI); err != nil {
 		return fmt.Errorf(
-			"%s CLI not found.\n\n  Install: brew install %s\n  Then run: %s",
-			p.Name, p.CLI, p.ValidateCmd,
+			"%s CLI not found — install and authenticate to use this provider.",
 		)
 	}
 

@@ -26,7 +26,7 @@ var tunnelCmd = &cobra.Command{
 			return fmt.Errorf("server not set")
 		}
 
-		ip, err := resolveServer("hetzner", cfg.Server)
+		ip, err := resolveServer("", cfg.Server)
 		if err != nil {
 			return err
 		}

@@ -42,7 +42,7 @@ func TestHelp(t *testing.T) {
 		t.Fatalf("ship --help: %v", err)
 	}
 	expected := []string{
-		"deploy", "setup", "snapshot", "rollback",
+		"deploy", "down", "setup", "snapshot", "rollback",
 		"tunnel", "migrate", "whoami", "discover",
 		"sizes", "regions", "init", "status", "logs", "ssh",
 	}
@@ -156,5 +156,109 @@ func TestSetupRequiresServer(t *testing.T) {
 	}
 	if !strings.Contains(string(out), "server") {
 		t.Errorf("expected server error, got: %s", out)
+	}
+}
+
+func TestDownRequiresConfig(t *testing.T) {
+	dir := t.TempDir()
+	cmd := exec.Command(binary, "down", "--local")
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Error("down without ship.toml should fail")
+	}
+	if !strings.Contains(string(out), "ship.toml") {
+		t.Errorf("expected ship.toml error, got: %s", out)
+	}
+}
+
+func TestDownHelp(t *testing.T) {
+	out, err := run("down", "--help")
+	if err != nil {
+		t.Fatalf("ship down --help: %v", err)
+	}
+	if !strings.Contains(out, "--local") {
+		t.Error("down help missing --local flag")
+	}
+	if !strings.Contains(out, "--volumes") {
+		t.Error("down help missing --volumes flag")
+	}
+	if !strings.Contains(out, "--server") {
+		t.Error("down help missing --server flag")
+	}
+}
+
+func TestDownLocalRequiresServerFlag(t *testing.T) {
+	dir := t.TempDir()
+	// Write a minimal ship.toml without a server
+	os.WriteFile(filepath.Join(dir, "ship.toml"), []byte(`app = "down-test"
+[deploy]
+port = 3000
+`), 0644)
+
+	// --local not set, and no server → should fail
+	cmd := exec.Command(binary, "down")
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Error("down without --local and no server should fail")
+	}
+	if !strings.Contains(string(out), "server") {
+		t.Errorf("expected server error, got: %s", out)
+	}
+}
+
+func TestDownLocalNoOp(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "ship.toml"), []byte(`app = "down-test"
+[deploy]
+port = 3000
+`), 0644)
+
+	// --local with no running containers should succeed (no-op)
+	cmd := exec.Command(binary, "down", "--local")
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("ship down --local (no-op): %v\n%s", err, out)
+	}
+	if !strings.Contains(string(out), "Down") {
+		t.Errorf("expected success, got: %s", out)
+	}
+}
+
+func TestDownLocalWithVolumes(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "ship.toml"), []byte(`app = "down-test"
+[deploy]
+port = 3000
+[services.postgres]
+image = "postgres:16-alpine"
+port = 5432
+[services.redis]
+image = "redis:7-alpine"
+port = 6379
+`), 0644)
+
+	// Create fake data
+	dataDir := filepath.Join(dir, ".ship-data", "down-test")
+	os.MkdirAll(dataDir, 0755)
+	os.WriteFile(filepath.Join(dataDir, "keep-me"), []byte("data"), 0644)
+
+	// Verify data exists
+	if _, err := os.Stat(dataDir); err != nil {
+		t.Fatalf("data dir not created: %v", err)
+	}
+
+	cmd := exec.Command(binary, "down", "--local", "--volumes")
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("ship down --local --volumes: %v\n%s", err, out)
+	}
+
+	// Data should be removed
+	if _, err := os.Stat(dataDir); !os.IsNotExist(err) {
+		t.Error("--volumes should remove .ship-data/")
 	}
 }

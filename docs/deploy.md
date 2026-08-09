@@ -1,5 +1,24 @@
 # Deploy
 
+## Architecture
+
+Ship builds the Docker image on your local machine, then streams it to the
+server over SSH — no registry, no build tools on the server, no source upload.
+
+```
+your machine                        remote VPS
+────────────                        ──────────
+docker build     (needs: Docker,
+→ docker save     Node.js, npm,
+                  source code)
+                                     docker load   (needs: Docker only)
+                                     → docker run
+```
+
+The server stays lean: just Docker runtime, Caddy for SSL, and your data.
+Builds are fast because they use your local CPU and Docker's layer cache.
+No risk of a `next build` OOM-ing on a $5 VPS.
+
 ## Pipeline
 
 ```

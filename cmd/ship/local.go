@@ -11,9 +11,11 @@ import (
 
 var localCmd = &cobra.Command{
 	Use:   "local",
-	Short: "Deploy to a local Docker SSH container for testing",
-	Long: `Runs a local SSH container that acts as a fake VPS.
-Useful for testing deployments before pushing to real infrastructure.`,
+	Short: "Manage the local test server (SSH container)",
+	Long: `Start/stop an SSH container that simulates a remote VPS on your machine.
+Used for testing the full deploy pipeline without a real server.
+
+For local development without SSH, use: ship deploy --local`,
 }
 
 var localStartCmd = &cobra.Command{
