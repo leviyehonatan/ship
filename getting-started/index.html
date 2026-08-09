@@ -677,26 +677,32 @@
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>ship<span class="w"> </span>keys<span class="w"> </span>generate<span class="w"> </span>file<span class="w">       </span><span class="c1"># cross-platform</span>
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>ship<span class="w"> </span>keys<span class="w"> </span>generate<span class="w"> </span>env<span class="w">        </span><span class="c1"># CI — set SHIP_AGE_KEY manually</span>
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># 5. Set secrets</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">NODE_ENV</span><span class="o">=</span>production
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://...
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># 5. Set secrets (credentials, API keys — encrypted in .env.encrypted)</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://...
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>ship<span class="w"> </span>secrets<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">RESEND_API_KEY</span><span class="o">=</span>re_...
 <a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1"># 6. Add a database (optional)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>ship<span class="w"> </span>pg<span class="w"> </span>create<span class="w"> </span>mydb<span class="w">          </span><span class="c1"># provisions Postgres container</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="c1"># → prints connection string, auto-sets DATABASE_URL secret</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="c1"># 7. Deploy (auto-sets up server on first run)</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>ship<span class="w"> </span>deploy<span class="w">                  </span><span class="c1"># first run: installs Docker + Caddy automatically</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">                             </span><span class="c1"># subsequent runs: build → push over SSH → run</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="c1"># 8. Day-to-day</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>ship<span class="w"> </span>logs<span class="w">                    </span><span class="c1"># tail output</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>ship<span class="w"> </span>status<span class="w">                  </span><span class="c1"># is it up?</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>ship<span class="w"> </span>releases<span class="w">                </span><span class="c1"># deployment history</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>ship<span class="w"> </span>snapshot<span class="w">                </span><span class="c1"># backup before changes</span>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>ship<span class="w"> </span>tunnel<span class="w"> </span>db<span class="w">               </span><span class="c1"># connect pgAdmin/DBeaver locally</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>ship<span class="w"> </span>ssl<span class="w"> </span>on<span class="w"> </span>myapp.com<span class="w">        </span><span class="c1"># enable HTTPS</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>ship<span class="w"> </span>doctor<span class="w">                  </span><span class="c1"># health check</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1"># 5b. Optionally, set public env vars in ship.toml [env]</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="c1">#     (non-sensitive, committed to git — NODE_ENV, LOG_LEVEL, etc.)</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1"># 6. Review resolved env vars</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>ship<span class="w"> </span>env<span class="w">                     </span><span class="c1"># secrets hidden</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>ship<span class="w"> </span>env<span class="w"> </span>--reveal<span class="w">            </span><span class="c1"># show all values</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="c1"># 7. Add sidecar services (Postgres, Redis, etc.) to ship.toml</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="c1">#     See docs/configuration.md for [services] section</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="c1"># 8. Deploy (auto-sets up server on first run)</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>ship<span class="w"> </span>deploy<span class="w">                  </span><span class="c1"># first run: installs Docker + Caddy automatically</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">                             </span><span class="c1"># subsequent runs: build → push over SSH → run</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="c1"># 9. Day-to-day</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>ship<span class="w"> </span>logs<span class="w">                    </span><span class="c1"># tail output</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>ship<span class="w"> </span>status<span class="w">                  </span><span class="c1"># is it up?</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>ship<span class="w"> </span>releases<span class="w">                </span><span class="c1"># deployment history</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>ship<span class="w"> </span>snapshot<span class="w">                </span><span class="c1"># backup before changes</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>ship<span class="w"> </span>tunnel<span class="w"> </span>db<span class="w">               </span><span class="c1"># connect pgAdmin/DBeaver locally</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>ship<span class="w"> </span>ssl<span class="w"> </span>on<span class="w"> </span>myapp.com<span class="w">        </span><span class="c1"># enable HTTPS</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>ship<span class="w"> </span>doctor<span class="w">                  </span><span class="c1"># health check</span>
 </code></pre></div>
 <h2 id="common-patterns">Common patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <p><strong>Multiple apps on one server:</strong>

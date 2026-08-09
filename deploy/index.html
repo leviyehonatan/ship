@@ -485,6 +485,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#release-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release command
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ssl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -650,6 +661,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#release-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release command
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ssl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -705,18 +727,22 @@
 <h1 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h1>
 <h2 id="pipeline">Pipeline<a class="headerlink" href="#pipeline" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ship deploy
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  → docker build (local, layer-cached)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  → docker save | SSH pipe | docker load (no registry)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  → docker run -e SECRET=... (env from .env.encrypted)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  → Caddyfile updated (additive, multi-app safe)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  → pg_dump snapshot taken
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  → start services (postgres, redis, etc.)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  → docker build (local, layer-cached)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  → docker save | SSH pipe | docker load (no registry)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  → docker run -e SECRET=... (env from .env.encrypted + ship.toml [env])
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  → docker exec &lt;release_command&gt; (migrations, etc.)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  → Caddyfile updated (additive, multi-app safe)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  → pg_dump snapshot taken
 </code></pre></div>
 <h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">&para;</a></h2>
 <ol>
+<li><strong>Services</strong> — starts sidecar containers defined in <code>[services]</code> if not running</li>
 <li><strong>Snapshot</strong> — backs up databases before deploy (safety net)</li>
-<li><strong>Build</strong> — <code>docker build</code> with args from ship.toml <code>[build.args]</code></li>
+<li><strong>Build</strong> — <code>docker build</code> with args from ship.toml <code>[build.args]</code>. Skip with <code>--skip-build</code></li>
 <li><strong>Push</strong> — image streams over SSH, no Docker Hub needed</li>
-<li><strong>Run</strong> — stops old container, starts new with env vars</li>
+<li><strong>Run</strong> — stops old container, starts new with env vars from <code>ship.toml [env]</code> + <code>.env.encrypted</code></li>
+<li><strong>Release</strong> — runs <code>[deploy] release_command</code> inside the container (e.g. <code>prisma db push</code>)</li>
 <li><strong>SSL</strong> — updates Caddy config (additive, never overwrites other apps)</li>
 <li><strong>Releases</strong> — records deploy timestamp + image reference</li>
 </ol>
@@ -733,18 +759,26 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;NEXT_PUBLIC_KEY=abc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;NODE_ENV=production&quot;</span><span class="p">]</span>
 </code></pre></div>
 <p>Passed as <code>--build-arg</code> to <code>docker build</code>. Docker's layer cache handles rebuilds — if args haven't changed, build is instant.</p>
+<p>To skip building when only secrets changed, use <code>--skip-build</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ship<span class="w"> </span>deploy<span class="w"> </span>--skip-build
+</code></pre></div>
+<h2 id="release-command">Release command<a class="headerlink" href="#release-command" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[deploy]</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">release_command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;npm run db:migrate&quot;</span>
+</code></pre></div>
+<p>Runs inside the new container after it starts. Use for database migrations, asset compilation, or cache warming. If it fails, a warning is shown but the deploy continues.</p>
 <h2 id="ssl">SSL<a class="headerlink" href="#ssl" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ship<span class="w"> </span>ssl<span class="w"> </span>on<span class="w"> </span>myapp.com<span class="w">     </span><span class="c1"># enable HTTPS</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ship<span class="w"> </span>ssl<span class="w"> </span>off<span class="w">               </span><span class="c1"># remove</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>ship<span class="w"> </span>ssl<span class="w"> </span>status<span class="w">            </span><span class="c1"># show certificates</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>ship<span class="w"> </span>ssl<span class="w"> </span>renew<span class="w">             </span><span class="c1"># force renewal</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span>ssl<span class="w"> </span>on<span class="w"> </span>myapp.com<span class="w">     </span><span class="c1"># enable HTTPS</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ship<span class="w"> </span>ssl<span class="w"> </span>off<span class="w">               </span><span class="c1"># remove</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ship<span class="w"> </span>ssl<span class="w"> </span>status<span class="w">            </span><span class="c1"># show certificates</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>ship<span class="w"> </span>ssl<span class="w"> </span>renew<span class="w">             </span><span class="c1"># force renewal</span>
 </code></pre></div>
 <p>Caddy auto-fetches Let's Encrypt certificates and auto-renews 30 days before expiry. Set <code>domains</code> in ship.toml <code>[deploy]</code> to auto-configure on deploy.</p>
 <p>Multiple apps on same server: each gets its own Caddy block. Ship never overwrites existing configurations.</p>
 <h2 id="volumes">Volumes<a class="headerlink" href="#volumes" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[[volumes]]</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10GB&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[[volumes]]</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10GB&quot;</span>
 </code></pre></div>
 <ul>
 <li><strong>Production:</strong> mounts at <code>/opt/ship/data/&lt;app&gt;/&lt;path&gt;</code></li>
@@ -752,9 +786,9 @@
 <li><strong>No volumes:</strong> container state lost on redeploy (warning shown)</li>
 </ul>
 <h2 id="rollback">Rollback<a class="headerlink" href="#rollback" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span>rollback<span class="w">              </span><span class="c1"># restore latest snapshot</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ship<span class="w"> </span>rollback<span class="w"> </span><span class="m">20260809</span><span class="w">     </span><span class="c1"># restore specific snapshot</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ship<span class="w"> </span>snapshots<span class="w">             </span><span class="c1"># list available</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ship<span class="w"> </span>rollback<span class="w">              </span><span class="c1"># restore latest snapshot</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>ship<span class="w"> </span>rollback<span class="w"> </span><span class="m">20260809</span><span class="w">     </span><span class="c1"># restore specific snapshot</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>ship<span class="w"> </span>snapshots<span class="w">             </span><span class="c1"># list available</span>
 </code></pre></div>
 <p>Snapshots cover Postgres + CouchDB + Redis. Created automatically before each deploy.</p>
 

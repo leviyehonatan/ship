@@ -92,19 +92,25 @@ ship keys generate keychain  # macOS Keychain (syncs via iCloud)
 ship keys generate file       # cross-platform
 ship keys generate env        # CI — set SHIP_AGE_KEY manually
 
-# 5. Set secrets
-ship secrets set NODE_ENV=production
+# 5. Set secrets (credentials, API keys — encrypted in .env.encrypted)
 ship secrets set DATABASE_URL=postgresql://...
+ship secrets set RESEND_API_KEY=re_...
 
-# 6. Add a database (optional)
-ship pg create mydb          # provisions Postgres container
-# → prints connection string, auto-sets DATABASE_URL secret
+# 5b. Optionally, set public env vars in ship.toml [env]
+#     (non-sensitive, committed to git — NODE_ENV, LOG_LEVEL, etc.)
 
-# 7. Deploy (auto-sets up server on first run)
+# 6. Review resolved env vars
+ship env                     # secrets hidden
+ship env --reveal            # show all values
+
+# 7. Add sidecar services (Postgres, Redis, etc.) to ship.toml
+#     See docs/configuration.md for [services] section
+
+# 8. Deploy (auto-sets up server on first run)
 ship deploy                  # first run: installs Docker + Caddy automatically
                              # subsequent runs: build → push over SSH → run
 
-# 8. Day-to-day
+# 9. Day-to-day
 ship logs                    # tail output
 ship status                  # is it up?
 ship releases                # deployment history
@@ -294,7 +300,7 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 |---|---|
 | `init` | Generate ship.toml (or --from fly) |
 | `setup` | Install Docker + Caddy + log rotation (auto-run on first deploy) |
-| `deploy` | Build → push → run → SSL (auto-snapshot) |
+| `deploy` | Build → push → run → SSL (auto-snapshot). `--skip-build` to skip docker build, `--server <name>` to override target |
 | `status` | Container health |
 | `logs` | Tail container output |
 | `ssh` | Server overview |
@@ -303,12 +309,13 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 | `releases` | Deployment history |
 | `image` | Show deployed image info |
 | `services` | Show exposed ports |
-| `doctor` | Diagnose local tools + server health |
+| `doctor` | Diagnose local tools + server health. `--server <name>` to check a specific server without ship.toml |
 
 ## Secrets
 
 | Command | Description |
 |---|---|
+| `env` | Show all resolved env vars (public + secrets). Secrets hidden by default; `--reveal` to show values |
 | `keys generate` | Create encryption key (choose storage) |
 | `keys status` | Show where key is stored |
 | `secrets set KEY=VALUE` | Store encrypted secret |
@@ -433,21 +440,25 @@ ship secrets import .env       # encrypts → .env.encrypted
 
 ```
 ship deploy
+  → start services (postgres, redis, etc.)
   → docker build (local, layer-cached)
   → docker save | SSH pipe | docker load (no registry)
-  → docker run -e SECRET=... (env from .env.encrypted)
+  → docker run -e SECRET=... (env from .env.encrypted + ship.toml [env])
+  → docker exec <release_command> (migrations, etc.)
   → Caddyfile updated (additive, multi-app safe)
   → pg_dump snapshot taken
 ```
 
 ## Steps
 
-1. **Snapshot** — backs up databases before deploy (safety net)
-2. **Build** — `docker build` with args from ship.toml `[build.args]`
-3. **Push** — image streams over SSH, no Docker Hub needed
-4. **Run** — stops old container, starts new with env vars
-5. **SSL** — updates Caddy config (additive, never overwrites other apps)
-6. **Releases** — records deploy timestamp + image reference
+1. **Services** — starts sidecar containers defined in `[services]` if not running
+2. **Snapshot** — backs up databases before deploy (safety net)
+3. **Build** — `docker build` with args from ship.toml `[build.args]`. Skip with `--skip-build`
+4. **Push** — image streams over SSH, no Docker Hub needed
+5. **Run** — stops old container, starts new with env vars from `ship.toml [env]` + `.env.encrypted`
+6. **Release** — runs `[deploy] release_command` inside the container (e.g. `prisma db push`)
+7. **SSL** — updates Caddy config (additive, never overwrites other apps)
+8. **Releases** — records deploy timestamp + image reference
 
 ## Server setup
 
@@ -470,6 +481,21 @@ args = ["NEXT_PUBLIC_KEY=abc", "NODE_ENV=production"]
 ```
 
 Passed as `--build-arg` to `docker build`. Docker's layer cache handles rebuilds — if args haven't changed, build is instant.
+
+To skip building when only secrets changed, use `--skip-build`:
+
+```bash
+ship deploy --skip-build
+```
+
+## Release command
+
+```toml
+[deploy]
+release_command = "npm run db:migrate"
+```
+
+Runs inside the new container after it starts. Use for database migrations, asset compilation, or cache warming. If it fails, a warning is shown but the deploy continues.
 
 ## SSL
 
@@ -588,20 +614,48 @@ server = "46.224.91.70"             # or use 'ship use <name>'
 
 [build]
 dockerfile = "Dockerfile"
-args = ["NEXT_PUBLIC_KEY=abc"]     # build-time env vars
+args = ["NEXT_PUBLIC_KEY=abc"]     # build-time ARG passed to docker build
 
+# Public, non-sensitive env vars — committed to git
+# For secrets use: ship secrets set KEY=value
 [env]
-NODE_ENV = "production"             # public, runtime env vars
+NODE_ENV = "production"
 
 [deploy]
 port = 8080
 domains = ["myapp.com"]             # SSL via Caddy
 health_check = "/health"
+release_command = "npm run db:migrate"  # runs after container starts
+
+# Sidecar services — run alongside the app container
+[services.postgres]
+image = "postgres:16-alpine"
+port = 5432
+env = { POSTGRES_DB = "myapp" }
+
+[services.redis]
+image = "redis:7-alpine"
+port = 6379
 
 [[volumes]]
 path = "/data"
 size = "10GB"
 ```
+
+### Env vars: public vs secrets
+
+- `[env]` — **public** config, committed to git (NODE_ENV, LOG_LEVEL, etc.)
+- `ship secrets set` — **secrets**, encrypted in `.env.encrypted` (DATABASE_URL, API keys, passwords)
+
+Use `ship env` to see all resolved env vars. Secrets are hidden by default; use `--reveal` to show values.
+
+### Services
+
+Sidecar containers defined in `[services.<name>]` are automatically started before deploy if not already running. Each service gets:
+
+- Container name: `<app>-<name>` (e.g. `myapp-postgres`)
+- Restart policy: `unless-stopped`
+- Port mapping: `<port>:<port>`
 
 ## Server resolution
 

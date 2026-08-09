@@ -733,7 +733,7 @@
 </tr>
 <tr>
 <td><code>deploy</code></td>
-<td>Build → push → run → SSL (auto-snapshot)</td>
+<td>Build → push → run → SSL (auto-snapshot). <code>--skip-build</code> to skip docker build, <code>--server &lt;name&gt;</code> to override target</td>
 </tr>
 <tr>
 <td><code>status</code></td>
@@ -769,7 +769,7 @@
 </tr>
 <tr>
 <td><code>doctor</code></td>
-<td>Diagnose local tools + server health</td>
+<td>Diagnose local tools + server health. <code>--server &lt;name&gt;</code> to check a specific server without ship.toml</td>
 </tr>
 </tbody>
 </table>
@@ -782,6 +782,10 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>env</code></td>
+<td>Show all resolved env vars (public + secrets). Secrets hidden by default; <code>--reveal</code> to show values</td>
+</tr>
 <tr>
 <td><code>keys generate</code></td>
 <td>Create encryption key (choose storage)</td>

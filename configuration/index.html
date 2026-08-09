@@ -501,6 +501,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ship.toml">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#env-vars-public-vs-secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Env vars: public vs secrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -590,6 +618,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ship.toml">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#env-vars-public-vs-secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Env vars: public vs secrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -664,20 +720,46 @@
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">[build]</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">dockerfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Dockerfile&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;NEXT_PUBLIC_KEY=abc&quot;</span><span class="p">]</span><span class="w">     </span><span class="c1"># build-time env vars</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;NEXT_PUBLIC_KEY=abc&quot;</span><span class="p">]</span><span class="w">     </span><span class="c1"># build-time ARG passed to docker build</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">[env]</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">NODE_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;production&quot;</span><span class="w">             </span><span class="c1"># public, runtime env vars</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">[deploy]</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8080</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">domains</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;myapp.com&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># SSL via Caddy</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">health_check</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/health&quot;</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">[[volumes]]</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data&quot;</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10GB&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Public, non-sensitive env vars — committed to git</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># For secrets use: ship secrets set KEY=value</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">[env]</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">NODE_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;production&quot;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">[deploy]</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8080</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">domains</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;myapp.com&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># SSL via Caddy</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">health_check</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/health&quot;</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">release_command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;npm run db:migrate&quot;</span><span class="w">  </span><span class="c1"># runs after container starts</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># Sidecar services — run alongside the app container</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">[services.postgres]</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;postgres:16-alpine&quot;</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5432</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="n">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">POSTGRES_DB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;myapp&quot;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="k">[services.redis]</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;redis:7-alpine&quot;</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">6379</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="k">[[volumes]]</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data&quot;</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10GB&quot;</span>
 </code></pre></div>
+<h3 id="env-vars-public-vs-secrets">Env vars: public vs secrets<a class="headerlink" href="#env-vars-public-vs-secrets" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>[env]</code> — <strong>public</strong> config, committed to git (NODE_ENV, LOG_LEVEL, etc.)</li>
+<li><code>ship secrets set</code> — <strong>secrets</strong>, encrypted in <code>.env.encrypted</code> (DATABASE_URL, API keys, passwords)</li>
+</ul>
+<p>Use <code>ship env</code> to see all resolved env vars. Secrets are hidden by default; use <code>--reveal</code> to show values.</p>
+<h3 id="services">Services<a class="headerlink" href="#services" title="Permanent link">&para;</a></h3>
+<p>Sidecar containers defined in <code>[services.&lt;name&gt;]</code> are automatically started before deploy if not already running. Each service gets:</p>
+<ul>
+<li>Container name: <code>&lt;app&gt;-&lt;name&gt;</code> (e.g. <code>myapp-postgres</code>)</li>
+<li>Restart policy: <code>unless-stopped</code></li>
+<li>Port mapping: <code>&lt;port&gt;:&lt;port&gt;</code></li>
+</ul>
 <h2 id="server-resolution">Server resolution<a class="headerlink" href="#server-resolution" title="Permanent link">&para;</a></h2>
 <p>Commands resolve the target server in this order:</p>
 <ol>
