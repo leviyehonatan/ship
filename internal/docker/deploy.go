@@ -13,10 +13,11 @@ import (
 )
 
 type Deployer struct {
-	tag    string
-	env    EnvFile
-	client *ssh.Client
-	Stdout io.Writer
+	tag           string
+	containerName string
+	env           EnvFile
+	client        *ssh.Client
+	Stdout        io.Writer
 }
 
 func NewDeployer(tag string, envFile string, sshClient *ssh.Client) (*Deployer, error) {
@@ -25,9 +26,10 @@ func NewDeployer(tag string, envFile string, sshClient *ssh.Client) (*Deployer, 
 		env = make(EnvFile)
 	}
 	return &Deployer{
-		tag:    tag,
-		env:    env,
-		client: sshClient,
+		tag:           tag,
+		containerName: AppContainer(tag),
+		env:           env,
+		client:        sshClient,
 	}, nil
 }
 
@@ -37,9 +39,10 @@ func NewDeployerWithEnv(tag string, env map[string]string, sshClient *ssh.Client
 		ef[k] = v
 	}
 	return &Deployer{
-		tag:    tag,
-		env:    ef,
-		client: sshClient,
+		tag:           tag,
+		containerName: AppContainer(tag),
+		env:           ef,
+		client:        sshClient,
 	}
 }
 
@@ -54,7 +57,7 @@ func (d *Deployer) Build(ctx context.Context) error {
 	if err := checkDisk(); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, "docker", "build", "-t", d.tag+":latest", ".")
+	cmd := exec.CommandContext(ctx, "docker", "build", "-t", ImageRef(d.tag), ".")
 	cmd.Stdout = d.stdout()
 	cmd.Stderr = d.stdout()
 	return cmd.Run()
@@ -64,7 +67,7 @@ func (d *Deployer) BuildWithArgs(ctx context.Context, args []string) error {
 	if err := checkDisk(); err != nil {
 		return err
 	}
-	buildArgs := []string{"build", "-t", d.tag + ":latest"}
+	buildArgs := []string{"build", "-t", ImageRef(d.tag)}
 	for _, a := range args {
 		buildArgs = append(buildArgs, "--build-arg", a)
 	}
@@ -81,7 +84,7 @@ func (d *Deployer) PushOverSSH() error {
 	}
 
 	// Start docker save — its stdout becomes stdin for remote docker load
-	saveCmd := exec.Command("docker", "save", d.tag+":latest")
+	saveCmd := exec.Command("docker", "save", ImageRef(d.tag))
 	saveCmd.Stderr = d.stdout()
 
 	pr, pw := io.Pipe()
@@ -123,25 +126,28 @@ func (d *Deployer) RunRemote(opts RunOpts) error {
 		portArgs = append(portArgs, "-p", p)
 	}
 
+	// Replace a previous ship-managed container, but refuse to touch a
+	// foreign container that happens to share the name.
+	if err := RemoveIfManaged(d.client, d.containerName); err != nil {
+		return fmt.Errorf("run: %w", err)
+	}
+
 	runCmd := fmt.Sprintf(
-		"docker stop %s 2>/dev/null; docker rm %s 2>/dev/null; docker run -d --name %s --restart unless-stopped %s %s %s %s %s:latest",
-		d.tag, d.tag, d.tag,
+		"docker run -d --name %s --restart unless-stopped --label %s=true --label %s=%s %s %s %s %s %s",
+		d.containerName,
+		ManagedLabel, AppLabel, d.tag,
 		opts.NetworkArgs,
 		strings.Join(envArgs, " "),
 		strings.Join(volumeArgs, " "),
 		strings.Join(portArgs, " "),
-		d.tag,
+		ImageRef(d.tag),
 	)
 
-	if d.client == nil {
-		if _, err := runLocal(runCmd); err != nil {
-			return fmt.Errorf("run: %w", err)
-		}
-		return nil
+	_, err := RunDocker(d.client, runCmd)
+	if err != nil {
+		return fmt.Errorf("run: %w", err)
 	}
-
-	_, err := d.client.Run(runCmd)
-	return err
+	return nil
 }
 
 func runLocal(cmd string) (string, error) {
@@ -166,16 +172,8 @@ func checkDisk() error {
 }
 
 func (d *Deployer) Logs(w io.Writer, tail string) error {
-	cmd := fmt.Sprintf("docker logs %s --tail %s", d.tag, tail)
-	if d.client == nil {
-		out, err := runLocal(cmd)
-		if err != nil {
-			return err
-		}
-		fmt.Fprint(w, out)
-		return nil
-	}
-	out, err := d.client.Run(cmd)
+	cmd := fmt.Sprintf("docker logs %s --tail %s", d.containerName, tail)
+	out, err := RunDocker(d.client, cmd)
 	if err != nil {
 		return err
 	}
@@ -184,15 +182,8 @@ func (d *Deployer) Logs(w io.Writer, tail string) error {
 }
 
 func (d *Deployer) Status() (string, error) {
-	cmd := fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", d.tag)
-	if d.client == nil {
-		out, err := runLocal(cmd)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(out), nil
-	}
-	out, err := d.client.Run(cmd)
+	cmd := fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}'", d.containerName)
+	out, err := RunDocker(d.client, cmd)
 	if err != nil {
 		return "", err
 	}
@@ -200,24 +191,11 @@ func (d *Deployer) Status() (string, error) {
 }
 
 func (d *Deployer) StopRemove() error {
-	cmd := fmt.Sprintf("docker stop %s 2>/dev/null; docker rm %s 2>/dev/null", d.tag, d.tag)
-	if d.client == nil {
-		runLocal(cmd)
-		return nil
-	}
-	d.client.Run(cmd)
-	return nil
+	return RemoveIfManaged(d.client, d.containerName)
 }
 
 func (d *Deployer) StopRemoveSvc(svcName string) error {
-	containerName := fmt.Sprintf("ship-svc-%s-%s", d.tag, svcName)
-	cmd := fmt.Sprintf("docker stop %s 2>/dev/null; docker rm %s 2>/dev/null", containerName, containerName)
-	if d.client == nil {
-		runLocal(cmd)
-		return nil
-	}
-	d.client.Run(cmd)
-	return nil
+	return RemoveIfManaged(d.client, ServiceContainer(d.tag, svcName))
 }
 
 type RunOpts struct {

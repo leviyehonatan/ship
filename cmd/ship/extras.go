@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/leviyehonatan/ship/internal/config"
+	deploy "github.com/leviyehonatan/ship/internal/docker"
 	shipssh "github.com/leviyehonatan/ship/internal/ssh"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +20,7 @@ var imageCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		out, err := ctx.Run("docker ps --filter name=" + ctx.Config.App + " --format '{{.Image}}\t{{.Status}}\t{{.CreatedAt}}'")
+		out, err := ctx.Run("docker ps --filter name=" + deploy.AppContainer(ctx.Config.App) + " --format '{{.Image}}\t{{.Status}}\t{{.CreatedAt}}'")
 		if err != nil {
 			return err
 		}
@@ -42,7 +43,7 @@ var servicesCmd = &cobra.Command{
 		if len(cfg.Config.Deploy.Domains) > 0 {
 			fmt.Fprintf(cmd.OutOrStdout(), "SSL:  https://%s\n", cfg.Config.Deploy.Domains[0])
 		}
-		out, _ := cfg.Run("docker ps --filter name=" + cfg.Config.App + " --format '{{.Ports}}'")
+		out, _ := cfg.Run("docker ps --filter name=" + deploy.AppContainer(cfg.Config.App) + " --format '{{.Ports}}'")
 		if out != "" {
 			fmt.Fprintf(cmd.OutOrStdout(), "Ports: %s\n", strings.TrimSpace(out))
 		}
@@ -155,7 +156,7 @@ var doctorCmd = &cobra.Command{
 			"uptime":  "uptime | awk -F',' '{print $1}'",
 		}
 		if cfg.App != "" {
-			remoteChecks["app"] = fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}' 2>&1", cfg.App)
+			remoteChecks["app"] = fmt.Sprintf("docker ps --filter name=%s --format '{{.Status}}' 2>&1", deploy.AppContainer(cfg.App))
 		}
 
 		for name, check := range remoteChecks {

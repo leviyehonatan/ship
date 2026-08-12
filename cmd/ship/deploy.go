@@ -187,8 +187,7 @@ Reads ship.toml for configuration. Secrets from .env.encrypted are auto-decrypte
 		// Attach app to bridge network if services are defined
 		networkArgs := ""
 		if len(cfg.Services) > 0 {
-			networkName := fmt.Sprintf("ship-net-%s", cfg.App)
-			networkArgs = fmt.Sprintf("--network %s", networkName)
+			networkArgs = fmt.Sprintf("--network %s", deploy.Network(cfg.App))
 		}
 
 		if err := deployer.RunRemote(deploy.RunOpts{
@@ -214,7 +213,7 @@ Reads ship.toml for configuration. Secrets from .env.encrypted are auto-decrypte
 			}
 
 			// Record release
-			releases.Record(sshClient, cfg.App, cfg.App+":latest")
+			releases.Record(sshClient, cfg.App, deploy.ImageRef(cfg.App))
 		}
 
 		// Run release command (migrations, etc.) if configured
@@ -223,12 +222,12 @@ Reads ship.toml for configuration. Secrets from .env.encrypted are auto-decrypte
 			var out string
 			var relErr error
 			if localMode {
-				rel := exec.Command("docker", append([]string{"exec", cfg.App}, strings.Fields(cfg.Deploy.ReleaseCommand)...)...)
+				rel := exec.Command("docker", append([]string{"exec", deploy.AppContainer(cfg.App)}, strings.Fields(cfg.Deploy.ReleaseCommand)...)...)
 				b, err := rel.CombinedOutput()
 				out = string(b)
 				relErr = err
 			} else {
-				out, relErr = sshClient.Run(fmt.Sprintf("docker exec %s %s", cfg.App, cfg.Deploy.ReleaseCommand))
+				out, relErr = sshClient.Run(fmt.Sprintf("docker exec %s %s", deploy.AppContainer(cfg.App), cfg.Deploy.ReleaseCommand))
 			}
 			if relErr != nil {
 				fmt.Fprintf(cmd.OutOrStdout(), "  Warning: release command failed: %v\n%s\n", relErr, out)
@@ -393,17 +392,17 @@ Use --local to target local Docker instead of a remote server.`,
 		d := deploy.NewDeployerWithEnv(cfg.App, nil, sshClient)
 
 		// Stop and remove app container
-		fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", cfg.App)
+		fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", deploy.AppContainer(cfg.App))
 		_ = d.StopRemove()
 
 		// Stop and remove service containers
 		for name := range cfg.Services {
-			fmt.Fprintf(cmd.OutOrStdout(), "  ship-svc-%s-%s\n", cfg.App, name)
+			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", deploy.ServiceContainer(cfg.App, name))
 			_ = d.StopRemoveSvc(name)
 		}
 
 		// Remove bridge network
-		network := fmt.Sprintf("ship-net-%s", cfg.App)
+		network := deploy.Network(cfg.App)
 		if localMode {
 			exec.Command("docker", "network", "rm", network).Run()
 		} else {
