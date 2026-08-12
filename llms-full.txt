@@ -685,6 +685,20 @@ size = "10GB"
 
 Use `ship env` to see all resolved env vars. Secrets are hidden by default; use `--reveal` to show values.
 
+### Naming convention
+
+Every Docker resource ship manages is prefixed with `ship-` and segmented by kind, so it can never collide with containers you manage yourself:
+
+| Resource | Name | Example |
+|---|---|---|
+| App container | `ship-app-<app>` | `ship-app-myapp` |
+| Service container | `ship-svc-<app>-<name>` | `ship-svc-myapp-postgres` |
+| Standalone Postgres | `ship-pg-<name>` | `ship-pg-analytics` |
+| Bridge network | `ship-net-<app>` | `ship-net-myapp` |
+| App image | `<app>:latest` | `myapp:latest` |
+
+Every container also carries Docker labels (`com.ship.managed=true`, `com.ship.app=<app>`). On redeploy or `ship down`, ship only ever removes containers with the managed label — if a name is already taken by a container ship didn't create, it refuses and leaves it alone rather than destroying it.
+
 ### Services
 
 Sidecar containers defined in `[services.<name>]` are provisioned automatically on deploy. Ship:

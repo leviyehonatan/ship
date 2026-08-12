@@ -516,6 +516,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming convention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#services" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -626,6 +637,17 @@
     <span class="md-ellipsis">
       
         Env vars: public vs secrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming convention
       
     </span>
   </a>
@@ -754,6 +776,45 @@
 <li><code>ship secrets set</code> — <strong>secrets</strong>, encrypted in <code>.env.encrypted</code> (DATABASE_URL, API keys, passwords)</li>
 </ul>
 <p>Use <code>ship env</code> to see all resolved env vars. Secrets are hidden by default; use <code>--reveal</code> to show values.</p>
+<h3 id="naming-convention">Naming convention<a class="headerlink" href="#naming-convention" title="Permanent link">&para;</a></h3>
+<p>Every Docker resource ship manages is prefixed with <code>ship-</code> and segmented by kind, so it can never collide with containers you manage yourself:</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Name</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App container</td>
+<td><code>ship-app-&lt;app&gt;</code></td>
+<td><code>ship-app-myapp</code></td>
+</tr>
+<tr>
+<td>Service container</td>
+<td><code>ship-svc-&lt;app&gt;-&lt;name&gt;</code></td>
+<td><code>ship-svc-myapp-postgres</code></td>
+</tr>
+<tr>
+<td>Standalone Postgres</td>
+<td><code>ship-pg-&lt;name&gt;</code></td>
+<td><code>ship-pg-analytics</code></td>
+</tr>
+<tr>
+<td>Bridge network</td>
+<td><code>ship-net-&lt;app&gt;</code></td>
+<td><code>ship-net-myapp</code></td>
+</tr>
+<tr>
+<td>App image</td>
+<td><code>&lt;app&gt;:latest</code></td>
+<td><code>myapp:latest</code></td>
+</tr>
+</tbody>
+</table>
+<p>Every container also carries Docker labels (<code>com.ship.managed=true</code>, <code>com.ship.app=&lt;app&gt;</code>). On redeploy or <code>ship down</code>, ship only ever removes containers with the managed label — if a name is already taken by a container ship didn't create, it refuses and leaves it alone rather than destroying it.</p>
 <h3 id="services">Services<a class="headerlink" href="#services" title="Permanent link">&para;</a></h3>
 <p>Sidecar containers defined in <code>[services.&lt;name&gt;]</code> are provisioned automatically on deploy. Ship:</p>
 <ul>
