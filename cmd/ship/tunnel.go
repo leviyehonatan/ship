@@ -8,38 +8,59 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/leviyehonatan/ship/internal/config"
 	"github.com/spf13/cobra"
 )
 
 var tunnelCmd = &cobra.Command{
-	Use:       "tunnel [service]",
-	Short:     "Open an SSH tunnel to a database",
-	Args:      cobra.ExactArgs(1),
-	ValidArgs: []string{"db", "couch", "redis"},
+	Use:   "tunnel [service]",
+	Short: "Open an SSH tunnel to a service",
+	Long:  `Forwards a port from a service on the server to your local machine.`,
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, err := newShipCtx(cmd)
+		cfg, err := config.Load(config.DefaultPath())
+		if err != nil {
+			return fmt.Errorf("loading ship.toml: %w", err)
+		}
+		if cfg.Server == "" {
+			return fmt.Errorf("server not set")
+		}
+
+		ip, err := resolveServer("", cfg.Server)
 		if err != nil {
 			return err
 		}
 
-		sshHost := ctx.IP
-		sshPort := "22"
-		if strings.Contains(ctx.IP, ":") {
-			if host, port, err := net.SplitHostPort(ctx.IP); err == nil {
-				sshHost, sshPort = host, port
+		sshHost, sshPort := ip, "22"
+		if strings.Contains(ip, ":") {
+			if h, p, e := net.SplitHostPort(ip); e == nil {
+				sshHost, sshPort = h, p
 			}
 		}
 
-		var remotePort int
-		switch args[0] {
-		case "db":
-			remotePort = 5432
-		case "couch":
-			remotePort = 5984
-		case "redis":
-			remotePort = 6379
-		default:
-			return fmt.Errorf("unknown service %q — use: db, couch, redis", args[0])
+		// Default: tunnel to the app
+		remotePort := cfg.Deploy.Port
+		if remotePort == 0 {
+			remotePort = 8080
+		}
+		serviceName := cfg.App
+
+		// If a service name is given, look it up in ship.toml [services]
+		if len(args) > 0 {
+			serviceName = args[0]
+			if svc, ok := cfg.Services[serviceName]; ok {
+				remotePort = svc.Port
+			} else {
+				// Try legacy aliases
+				switch serviceName {
+				case "db":
+					remotePort = 5432
+				case "couch":
+					remotePort = 5984
+				case "redis":
+					remotePort = 6379
+				}
+			}
 		}
 
 		sshArgs := []string{"-N", "-q", "-L", fmt.Sprintf("%d:127.0.0.1:%d", remotePort, remotePort),

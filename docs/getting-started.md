@@ -2,27 +2,27 @@
 
 ## What you need
 
-- A VPS provider account (Hetzner, with Linode/DO/Vultr coming)
+- A VPS provider account (Hetzner, Linode, DO, Vultr, AWS, GCP)
 - The provider's CLI installed and authenticated (`hcloud`, `doctl`, etc.)
+- Docker running on your local machine (for building)
 - A project with a Dockerfile
 
 ## The mental model
 
-Ship works like a managed platform, but on your own servers:
+Ship builds images locally (where you have Node.js, npm, and source code)
+and pushes them to your server over SSH. The server only needs Docker —
+no build toolchain, no source upload, no registry.
 
 ```
-ship servers create         →  provisions a VPS
-ship use <name>             →  sets it as your default target
-ship init                   →  creates ship.toml in your project
-ship deploy                 →  builds, pushes, runs, SSLs
-
-┌─────────────┐     ┌──────────────────┐
-│ your laptop │────▶│ your VPS          │
-│ ship deploy │     │ Docker + Caddy    │
-└─────────────┘     │ your app :8080    │
-                    │ Postgres :5432    │
-                    └──────────────────┘
+              ┌──────────┐
+ Laptop A ───▶│          │
+              │  tunity  │  ← app = "tunity" is the deployment identity
+ Laptop B ───▶│  :8080   │
+              │          │
+     CI  ───▶ └──────────┘
 ```
+
+Multiple machines can deploy the same app — ship.toml is the source of truth. The CLI is stateless; what matters is the `app` name and the `server` it targets.
 
 ## Step-by-step
 
@@ -106,7 +106,15 @@ ship deploy --server staging  # per-command override
 
 **Test locally before deploying:**
 ```bash
-ship local start        # starts local SSH container (fake VPS)
+ship deploy --local       # build and run on your machine (no SSH)
+ship status               # is it up?
+ship logs                 # tail output
+ship down --local         # stop and clean up
+```
+
+**Test the full SSH pipeline locally:**
+```bash
+ship local start          # starts local SSH container (fake VPS)
 ship use local
 ship deploy
 ship local stop

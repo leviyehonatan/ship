@@ -28,7 +28,7 @@ With --size, resizes the server to the specified type.`,
 			serverAddr = serverFlag
 		}
 
-		ip, err := resolveServer("hetzner", serverAddr)
+		ip, err := resolveServer("", serverAddr)
 		if err != nil {
 			return err
 		}

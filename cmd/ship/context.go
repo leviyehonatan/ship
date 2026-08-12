@@ -29,7 +29,7 @@ func newShipCtx(cmd *cobra.Command) (*shipCtx, error) {
 		return nil, fmt.Errorf("no server — set 'server' in ship.toml or use 'ship use <name>'")
 	}
 
-	ip, err := resolveServer("hetzner", serverFlag)
+	ip, err := resolveServer("", serverFlag)
 	if err != nil {
 		return nil, err
 	}

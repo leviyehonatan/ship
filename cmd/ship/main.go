@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/leviyehonatan/ship/internal/detect"
+	shiplog "github.com/leviyehonatan/ship/internal/log"
 	"github.com/spf13/cobra"
 )
 
@@ -20,8 +21,21 @@ var rootCmd = &cobra.Command{
 	Short: "ship — deploy containers to your own VPS",
 	Long: `ship is a CLI tool that deploys your app to VPS providers
 like Hetzner, Linode, DigitalOcean, and Vultr.`,
-	SilenceUsage: true,
-	Version:      "v0.3.0",
+	SilenceUsage:      true,
+	Version:           "v0.3.0",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		verbose, _ := cmd.Flags().GetBool("verbose")
+		w, err := shiplog.Init(cmd.CommandPath(), verbose)
+		if err != nil {
+			return err
+		}
+		cmd.SetOut(w)
+		return nil
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		shiplog.Close()
+		return nil
+	},
 }
 
 func init() {
@@ -61,6 +75,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(downCmd)
 	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(sshCmd)
@@ -79,6 +94,8 @@ func init() {
 	serverCreateCmd.Flags().String("key", "", "Path to SSH public key (default: ~/.ssh/id_rsa.pub)")
 
 	initCmd.Flags().String("from", "", "Generate from existing config (e.g. --from fly)")
+
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Show verbose output in terminal")
 }
 
 // ============================================================

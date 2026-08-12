@@ -92,10 +92,9 @@ func newTestEnv(t *testing.T, suffix string) *testEnv {
 		dir:     t.TempDir(),
 	}
 
+	// Containers run inside the Docker VM (colima/Docker Desktop), so the
+	// mount source is the VM's own socket, not the host-side CLI socket.
 	dockerSock := "/var/run/docker.sock"
-	if _, err := os.Stat(dockerSock); err != nil {
-		dockerSock = os.ExpandEnv("$HOME/.docker/run/docker.sock")
-	}
 
 	// Remove any leftover container from previous crashed run
 	exec.Command("docker", "rm", "-f", env.sshName, env.appName).Run()

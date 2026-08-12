@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"os/exec"
 	"strings"
 	"testing"
 )
@@ -48,5 +49,23 @@ func TestFullShipCycle(t *testing.T) {
 	env.runShipOut("snapshot")
 	env.runShip("snapshots")
 
-	t.Log("✓ Full cycle: init → setup → deploy → status → logs → ssh → snapshot")
+	// down — stop and remove everything (local path, no SSH needed)
+	t.Log("--- down ---")
+	downOut, err := env.runShip("down", "--local")
+	if err != nil {
+		t.Errorf("ship down --local failed: %v\n%s", err, downOut)
+	}
+	if strings.Contains(downOut, "Down") {
+		t.Log("✓ down succeeds")
+	}
+
+	// verify container is gone (local docker)
+	check := exec.Command("docker", "ps", "--filter", "name="+env.appName, "--format", "{{.Names}}")
+	containerCheck, _ := check.Output()
+	if len(strings.TrimSpace(string(containerCheck))) > 0 {
+		t.Errorf("container %s still running after down", env.appName)
+	}
+	t.Log("✓ container removed")
+
+	t.Log("✓ Full cycle: init → setup → deploy → status → logs → ssh → snapshot → down")
 }

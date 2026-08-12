@@ -14,7 +14,7 @@ type Provider struct{}
 func New() *Provider                                    { return &Provider{} }
 func (p *Provider) Name() string                        { return "aws" }
 func (p *Provider) AuthCommand() string                 { return "aws ec2 describe-instances" }
-func (p *Provider) SetupInstructions() string            { return "Install: brew install awscli\nThen: aws configure" }
+func (p *Provider) SetupInstructions() string            { return "aws CLI not installed.\n  Install: https://aws.amazon.com/cli/\nThen: aws configure" }
 func (p *Provider) Validate(ctx context.Context) error   { return exec.CommandContext(ctx, "aws", "ec2", "describe-instances", "--max-items", "1").Run() }
 
 func (p *Provider) CreateServer(ctx context.Context, opts provider.CreateServerOpts) (*provider.Server, error) {

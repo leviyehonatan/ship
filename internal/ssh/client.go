@@ -101,13 +101,21 @@ func (c *Client) CopyFile(localPath string, remotePath string) error {
 
 // sshArgs builds the argument list for the ssh command.
 func (c *Client) sshArgs() []string {
-	return []string{
+	args := []string{
 		"ssh",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "ConnectTimeout=10",
 		"-p", c.port(),
 		fmt.Sprintf("%s@%s", c.user, c.hostname()),
 	}
+	// Password auth fallback via sshpass (matches the old crypto/ssh
+	// client's SSHPASS support). -e reads the password from $SSHPASS.
+	if os.Getenv("SSHPASS") != "" {
+		if _, err := exec.LookPath("sshpass"); err == nil {
+			return append([]string{"sshpass", "-e"}, args...)
+		}
+	}
+	return args
 }
 
 // runWithIO is the shared implementation for Run and Stream.

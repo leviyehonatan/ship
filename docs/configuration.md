@@ -22,10 +22,11 @@ domains = ["myapp.com"]             # SSL via Caddy
 health_check = "/health"
 release_command = "npm run db:migrate"  # runs after container starts
 
-# Sidecar services — run alongside the app container
+# Sidecar services — run on a per-app bridge network, reachable by name
 [services.postgres]
 image = "postgres:16-alpine"
 port = 5432
+volume = "/data/postgres"          # optional, defaults to /data/<name>
 env = { POSTGRES_DB = "myapp" }
 
 [services.redis]
@@ -46,11 +47,36 @@ Use `ship env` to see all resolved env vars. Secrets are hidden by default; use 
 
 ### Services
 
-Sidecar containers defined in `[services.<name>]` are automatically started before deploy if not already running. Each service gets:
+Sidecar containers defined in `[services.<name>]` are provisioned automatically on deploy. Ship:
 
-- Container name: `<app>-<name>` (e.g. `myapp-postgres`)
-- Restart policy: `unless-stopped`
-- Port mapping: `<port>:<port>`
+- Creates a per-app bridge network (`ship-net-<app>`) and attaches both app and services to it
+- Names service containers `ship-svc-<app>-<name>` (e.g. `ship-svc-myapp-postgres`)
+- Adds a DNS alias per service, so the app reaches them by name (e.g. `postgres`, `redis`)
+- Auto-generates connection strings (see below)
+- Persists data at `/opt/ship/data/<app>/data/<name>` (remote) or `.ship-data/<app>/data/<name>` (local)
+
+```toml
+[services.postgres]
+image = "postgres:16-alpine"
+port = 5432
+volume = "/data/postgres"   # optional, defaults to /data/<name>
+env = { POSTGRES_DB = "myapp" }
+
+[services.redis]
+image = "redis:7-alpine"
+port = 6379
+```
+
+**Auto-generated connection strings** (injected into the app container, unless already set in `[env]` or secrets):
+
+| Service image | Env var |
+|---|---|
+| `postgres:*` | `DATABASE_URL=postgresql://postgres:<pass>@postgres:5432/<db>` |
+| `redis:*` | `REDIS_URL=redis://redis:6379` |
+
+If `POSTGRES_PASSWORD` is not set in the service `env`, ship generates a random one.
+
+Stop everything with `ship down` (add `--local` for local Docker, `--volumes` to also wipe data).
 
 ## Server resolution
 

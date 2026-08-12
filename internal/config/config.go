@@ -9,15 +9,15 @@ import (
 )
 
 type ShipConfig struct {
-	App      string                    `toml:"app"`
-	Server   string                    `toml:"server"`
-	Build    Build                     `toml:"build"`
-	Deploy   Deploy                    `toml:"deploy"`
-	Env      map[string]string         `toml:"env,omitempty"`
-	Volumes  []Volume                  `toml:"volumes"`
-	Services map[string]ServiceConfig  `toml:"services,omitempty"`
-	EnvFile  string                    `toml:"env_file,omitempty"`
-	Warnings []string                  `toml:"-"` // populated by Load for unknown keys
+	App      string            `toml:"app"`
+	Server   string            `toml:"server"`
+	Build    Build             `toml:"build"`
+	Deploy   Deploy            `toml:"deploy"`
+	Env      map[string]string `toml:"env,omitempty"`
+	Services map[string]Service `toml:"services,omitempty"`
+	Volumes  []Volume          `toml:"volumes"`
+	EnvFile  string            `toml:"env_file,omitempty"`
+	Warnings []string          `toml:"-"` // populated by Load for unknown keys
 }
 
 type Build struct {
@@ -38,12 +38,13 @@ type Volume struct {
 	Size string `toml:"size"`
 }
 
-// ServiceConfig defines a sidecar container (Postgres, Redis, etc.)
+// Service defines a sidecar container (Postgres, Redis, etc.)
 // that ship manages alongside the main app.
-type ServiceConfig struct {
-	Image string            `toml:"image"`
-	Port  int               `toml:"port"`
-	Env   map[string]string `toml:"env,omitempty"`
+type Service struct {
+	Image  string            `toml:"image"`
+	Port   int               `toml:"port"`
+	Volume string            `toml:"volume,omitempty"`
+	Env    map[string]string `toml:"env,omitempty"`
 }
 
 func Load(path string) (*ShipConfig, error) {
@@ -79,6 +80,24 @@ func Load(path string) (*ShipConfig, error) {
 
 func DefaultPath() string {
 	return "ship.toml"
+}
+
+func SetServer(path string, server string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading %s: %w", path, err)
+	}
+	var cfg ShipConfig
+	if err := toml.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("parsing %s: %w", path, err)
+	}
+	cfg.Server = server
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
 }
 
 func HomeDir() string {

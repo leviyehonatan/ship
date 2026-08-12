@@ -14,7 +14,7 @@ type Provider struct{}
 func New() *Provider                                    { return &Provider{} }
 func (p *Provider) Name() string                        { return "vultr" }
 func (p *Provider) AuthCommand() string                 { return "vultr-cli instance list" }
-func (p *Provider) SetupInstructions() string            { return "Install: brew install vultr-cli\nThen: export VULTR_API_KEY=<key>" }
+func (p *Provider) SetupInstructions() string            { return "vultr-cli not installed.\n  Install: https://github.com/vultr/vultr-cli\nThen: export VULTR_API_KEY=<key>" }
 func (p *Provider) Validate(ctx context.Context) error   { return exec.CommandContext(ctx, "vultr-cli", "instance", "list").Run() }
 
 func (p *Provider) CreateServer(ctx context.Context, opts provider.CreateServerOpts) (*provider.Server, error) {

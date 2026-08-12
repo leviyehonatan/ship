@@ -14,7 +14,7 @@ type Provider struct{}
 func New() *Provider                                    { return &Provider{} }
 func (p *Provider) Name() string                        { return "digitalocean" }
 func (p *Provider) AuthCommand() string                 { return "doctl account get" }
-func (p *Provider) SetupInstructions() string            { return "Install: brew install doctl\nThen: doctl auth init" }
+func (p *Provider) SetupInstructions() string            { return "doctl not installed.\n  Install: https://docs.digitalocean.com/reference/doctl/\nThen: doctl auth init" }
 func (p *Provider) Validate(ctx context.Context) error   { return exec.CommandContext(ctx, "doctl", "account", "get").Run() }
 
 func (p *Provider) CreateServer(ctx context.Context, opts provider.CreateServerOpts) (*provider.Server, error) {
