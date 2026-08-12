@@ -674,7 +674,7 @@
 </tr>
 <tr>
 <td><code>discover</code></td>
-<td>List existing servers</td>
+<td>List existing servers from all providers</td>
 </tr>
 <tr>
 <td><code>servers create [name]</code></td>
@@ -689,8 +689,12 @@
 <td>Delete a server</td>
 </tr>
 <tr>
+<td><code>use</code></td>
+<td>Pick a server interactively and set as default</td>
+</tr>
+<tr>
 <td><code>use [name]</code></td>
-<td>Set default server</td>
+<td>Set server by name (or <code>provider/name</code>)</td>
 </tr>
 <tr>
 <td><code>scale</code></td>
@@ -710,7 +714,7 @@
 </tr>
 <tr>
 <td><code>local start/stop</code></td>
-<td>Run local SSH container for testing</td>
+<td>Manage local SSH test container</td>
 </tr>
 </tbody>
 </table>
@@ -733,7 +737,23 @@
 </tr>
 <tr>
 <td><code>deploy</code></td>
-<td>Build → push → run → SSL (auto-snapshot). <code>--skip-build</code> to skip docker build, <code>--server &lt;name&gt;</code> to override target</td>
+<td>Build locally, push over SSH, run on server. <code>--skip-build</code> to skip docker build, <code>--server &lt;name&gt;</code> to override target</td>
+</tr>
+<tr>
+<td><code>deploy --local</code></td>
+<td>Build and run on local Docker (no SSH, no SSL)</td>
+</tr>
+<tr>
+<td><code>down</code></td>
+<td>Stop app + services, remove network</td>
+</tr>
+<tr>
+<td><code>down --local</code></td>
+<td>Same, for local Docker</td>
+</tr>
+<tr>
+<td><code>down --volumes</code></td>
+<td>Also remove persistent data</td>
 </tr>
 <tr>
 <td><code>status</code></td>
@@ -773,6 +793,8 @@
 </tr>
 </tbody>
 </table>
+<p>All commands support <code>-v</code> / <code>--verbose</code> for detailed output in the terminal.
+Logs are also written to <code>~/.config/ship/logs/</code> on every invocation.</p>
 <h2 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -858,8 +880,8 @@
 <td>Restore a snapshot</td>
 </tr>
 <tr>
-<td><code>tunnel db\|couch\|redis</code></td>
-<td>SSH tunnel to database</td>
+<td><code>tunnel &lt;service&gt;</code></td>
+<td>SSH tunnel to a service from ship.toml (db, couch, redis, or any [services] name)</td>
 </tr>
 <tr>
 <td><code>migrate fly --to &lt;ip&gt;</code></td>

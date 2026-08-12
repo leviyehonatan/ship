@@ -639,24 +639,23 @@
 <h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
 <h2 id="what-you-need">What you need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A VPS provider account (Hetzner, with Linode/DO/Vultr coming)</li>
+<li>A VPS provider account (Hetzner, Linode, DO, Vultr, AWS, GCP)</li>
 <li>The provider's CLI installed and authenticated (<code>hcloud</code>, <code>doctl</code>, etc.)</li>
+<li>Docker running on your local machine (for building)</li>
 <li>A project with a Dockerfile</li>
 </ul>
 <h2 id="the-mental-model">The mental model<a class="headerlink" href="#the-mental-model" title="Permanent link">&para;</a></h2>
-<p>Ship works like a managed platform, but on your own servers:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ship servers create         →  provisions a VPS
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ship use &lt;name&gt;             →  sets it as your default target
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ship init                   →  creates ship.toml in your project
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>ship deploy                 →  builds, pushes, runs, SSLs
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>┌─────────────┐     ┌──────────────────┐
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│ your laptop │────▶│ your VPS          │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│ ship deploy │     │ Docker + Caddy    │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└─────────────┘     │ your app :8080    │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                    │ Postgres :5432    │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                    └──────────────────┘
+<p>Ship builds images locally (where you have Node.js, npm, and source code)
+and pushes them to your server over SSH. The server only needs Docker —
+no build toolchain, no source upload, no registry.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>              ┌──────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a> Laptop A ───▶│          │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>              │  tunity  │  ← app = &quot;tunity&quot; is the deployment identity
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a> Laptop B ───▶│  :8080   │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>              │          │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>     CI  ───▶ └──────────┘
 </code></pre></div>
+<p>Multiple machines can deploy the same app — ship.toml is the source of truth. The CLI is stateless; what matters is the <code>app</code> name and the <code>server</code> it targets.</p>
 <h2 id="step-by-step">Step-by-step<a class="headerlink" href="#step-by-step" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. See what&#39;s available</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ship<span class="w"> </span>whoami<span class="w">                  </span><span class="c1"># ✓ hetzner ready</span>
@@ -728,13 +727,19 @@ Docker container names use the app name, so no collision.</p>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ship<span class="w"> </span>deploy<span class="w"> </span>--server<span class="w"> </span>staging<span class="w">  </span><span class="c1"># per-command override</span>
 </code></pre></div></p>
 <p><strong>Test locally before deploying:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>start<span class="w">        </span><span class="c1"># starts local SSH container (fake VPS)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ship<span class="w"> </span>use<span class="w"> </span><span class="nb">local</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ship<span class="w"> </span>deploy
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>stop
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ship<span class="w"> </span>deploy<span class="w"> </span>--local<span class="w">       </span><span class="c1"># build and run on your machine (no SSH)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ship<span class="w"> </span>status<span class="w">               </span><span class="c1"># is it up?</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ship<span class="w"> </span>logs<span class="w">                 </span><span class="c1"># tail output</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>ship<span class="w"> </span>down<span class="w"> </span>--local<span class="w">         </span><span class="c1"># stop and clean up</span>
+</code></pre></div></p>
+<p><strong>Test the full SSH pipeline locally:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>start<span class="w">          </span><span class="c1"># starts local SSH container (fake VPS)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>ship<span class="w"> </span>use<span class="w"> </span><span class="nb">local</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ship<span class="w"> </span>deploy
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>ship<span class="w"> </span><span class="nb">local</span><span class="w"> </span>stop
 </code></pre></div></p>
 <p><strong>Check your setup:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ship<span class="w"> </span>doctor<span class="w">             </span><span class="c1"># local tools + remote server health</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ship<span class="w"> </span>doctor<span class="w">             </span><span class="c1"># local tools + remote server health</span>
 </code></pre></div></p>
 
 

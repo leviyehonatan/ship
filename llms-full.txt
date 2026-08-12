@@ -48,27 +48,27 @@ ship deploy
 
 ## What you need
 
-- A VPS provider account (Hetzner, with Linode/DO/Vultr coming)
+- A VPS provider account (Hetzner, Linode, DO, Vultr, AWS, GCP)
 - The provider's CLI installed and authenticated (`hcloud`, `doctl`, etc.)
+- Docker running on your local machine (for building)
 - A project with a Dockerfile
 
 ## The mental model
 
-Ship works like a managed platform, but on your own servers:
+Ship builds images locally (where you have Node.js, npm, and source code)
+and pushes them to your server over SSH. The server only needs Docker —
+no build toolchain, no source upload, no registry.
 
 ```
-ship servers create         →  provisions a VPS
-ship use <name>             →  sets it as your default target
-ship init                   →  creates ship.toml in your project
-ship deploy                 →  builds, pushes, runs, SSLs
-
-┌─────────────┐     ┌──────────────────┐
-│ your laptop │────▶│ your VPS          │
-│ ship deploy │     │ Docker + Caddy    │
-└─────────────┘     │ your app :8080    │
-                    │ Postgres :5432    │
-                    └──────────────────┘
+              ┌──────────┐
+ Laptop A ───▶│          │
+              │  tunity  │  ← app = "tunity" is the deployment identity
+ Laptop B ───▶│  :8080   │
+              │          │
+     CI  ───▶ └──────────┘
 ```
+
+Multiple machines can deploy the same app — ship.toml is the source of truth. The CLI is stateless; what matters is the `app` name and the `server` it targets.
 
 ## Step-by-step
 
@@ -152,7 +152,15 @@ ship deploy --server staging  # per-command override
 
 **Test locally before deploying:**
 ```bash
-ship local start        # starts local SSH container (fake VPS)
+ship deploy --local       # build and run on your machine (no SSH)
+ship status               # is it up?
+ship logs                 # tail output
+ship down --local         # stop and clean up
+```
+
+**Test the full SSH pipeline locally:**
+```bash
+ship local start          # starts local SSH container (fake VPS)
 ship use local
 ship deploy
 ship local stop
@@ -283,16 +291,17 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 | Command | Description |
 |---|---|
 | `whoami` | Show configured providers and platforms |
-| `discover` | List existing servers |
+| `discover` | List existing servers from all providers |
 | `servers create [name]` | Provision a VPS |
 | `servers list` | List all servers |
 | `servers delete [id]` | Delete a server |
-| `use [name]` | Set default server |
+| `use` | Pick a server interactively and set as default |
+| `use [name]` | Set server by name (or `provider/name`) |
 | `scale` | Show or change server size |
 | `sizes` | Compare server pricing |
 | `regions` | List available regions |
 | `dashboard` | Open provider web console |
-| `local start/stop` | Run local SSH container for testing |
+| `local start/stop` | Manage local SSH test container |
 
 ## Deploy
 
@@ -300,7 +309,11 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 |---|---|
 | `init` | Generate ship.toml (or --from fly) |
 | `setup` | Install Docker + Caddy + log rotation (auto-run on first deploy) |
-| `deploy` | Build → push → run → SSL (auto-snapshot). `--skip-build` to skip docker build, `--server <name>` to override target |
+| `deploy` | Build locally, push over SSH, run on server. `--skip-build` to skip docker build, `--server <name>` to override target |
+| `deploy --local` | Build and run on local Docker (no SSH, no SSL) |
+| `down` | Stop app + services, remove network |
+| `down --local` | Same, for local Docker |
+| `down --volumes` | Also remove persistent data |
 | `status` | Container health |
 | `logs` | Tail container output |
 | `ssh` | Server overview |
@@ -310,6 +323,9 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 | `image` | Show deployed image info |
 | `services` | Show exposed ports |
 | `doctor` | Diagnose local tools + server health. `--server <name>` to check a specific server without ship.toml |
+
+All commands support `-v` / `--verbose` for detailed output in the terminal.
+Logs are also written to `~/.config/ship/logs/` on every invocation.
 
 ## Secrets
 
@@ -336,7 +352,7 @@ No provider CLI needed. SSH key from `~/.ssh/id_rsa.pub` auto-injected.
 | `snapshot` | Backup databases |
 | `snapshots` | List snapshots |
 | `rollback [id]` | Restore a snapshot |
-| `tunnel db\|couch\|redis` | SSH tunnel to database |
+| `tunnel <service>` | SSH tunnel to a service from ship.toml (db, couch, redis, or any [services] name) |
 | `migrate fly --to <ip>` | Migrate from Fly.io |
 
 ## SSL
@@ -435,6 +451,25 @@ ship secrets import .env       # encrypts → .env.encrypted
 ---
 
 # Deploy
+
+## Architecture
+
+Ship builds the Docker image on your local machine, then streams it to the
+server over SSH — no registry, no build tools on the server, no source upload.
+
+```
+your machine                        remote VPS
+────────────                        ──────────
+docker build     (needs: Docker,
+→ docker save     Node.js, npm,
+                  source code)
+                                     docker load   (needs: Docker only)
+                                     → docker run
+```
+
+The server stays lean: just Docker runtime, Caddy for SSL, and your data.
+Builds are fast because they use your local CPU and Docker's layer cache.
+No risk of a `next build` OOM-ing on a $5 VPS.
 
 ## Pipeline
 
@@ -627,10 +662,11 @@ domains = ["myapp.com"]             # SSL via Caddy
 health_check = "/health"
 release_command = "npm run db:migrate"  # runs after container starts
 
-# Sidecar services — run alongside the app container
+# Sidecar services — run on a per-app bridge network, reachable by name
 [services.postgres]
 image = "postgres:16-alpine"
 port = 5432
+volume = "/data/postgres"          # optional, defaults to /data/<name>
 env = { POSTGRES_DB = "myapp" }
 
 [services.redis]
@@ -651,11 +687,36 @@ Use `ship env` to see all resolved env vars. Secrets are hidden by default; use 
 
 ### Services
 
-Sidecar containers defined in `[services.<name>]` are automatically started before deploy if not already running. Each service gets:
+Sidecar containers defined in `[services.<name>]` are provisioned automatically on deploy. Ship:
 
-- Container name: `<app>-<name>` (e.g. `myapp-postgres`)
-- Restart policy: `unless-stopped`
-- Port mapping: `<port>:<port>`
+- Creates a per-app bridge network (`ship-net-<app>`) and attaches both app and services to it
+- Names service containers `ship-svc-<app>-<name>` (e.g. `ship-svc-myapp-postgres`)
+- Adds a DNS alias per service, so the app reaches them by name (e.g. `postgres`, `redis`)
+- Auto-generates connection strings (see below)
+- Persists data at `/opt/ship/data/<app>/data/<name>` (remote) or `.ship-data/<app>/data/<name>` (local)
+
+```toml
+[services.postgres]
+image = "postgres:16-alpine"
+port = 5432
+volume = "/data/postgres"   # optional, defaults to /data/<name>
+env = { POSTGRES_DB = "myapp" }
+
+[services.redis]
+image = "redis:7-alpine"
+port = 6379
+```
+
+**Auto-generated connection strings** (injected into the app container, unless already set in `[env]` or secrets):
+
+| Service image | Env var |
+|---|---|
+| `postgres:*` | `DATABASE_URL=postgresql://postgres:<pass>@postgres:5432/<db>` |
+| `redis:*` | `REDIS_URL=redis://redis:6379` |
+
+If `POSTGRES_PASSWORD` is not set in the service `env`, ship generates a random one.
+
+Stop everything with `ship down` (add `--local` for local Docker, `--volumes` to also wipe data).
 
 ## Server resolution
 
